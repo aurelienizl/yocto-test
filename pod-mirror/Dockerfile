@@ -58,10 +58,6 @@ RUN chmod +x /home/generic/build_mirror.sh && \
 RUN mkdir -p /home/generic/yocto-mirror/downloads /home/generic/yocto-mirror/sstate-cache && \
     chown -R generic:generic /home/generic/yocto-mirror
 
-# Create log directory and set ownership to generic user
-RUN mkdir -p /var/log/supervisor && \
-    chown -R generic:generic /var/log/supervisor
-
 # Expose port 80
 EXPOSE 80
 
