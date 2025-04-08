@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Mirror Refresh Dashboard</title>
-  <!-- Bootstrap CSS via CDN -->
+  <!-- Bootstrap CSS via CDN without SRI -->
   <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      integrity="sha384-MecoVQfZGV2VWptC8OkC/hc6c6Z8fg6g4KHtcqU9pqUbVWEUmA/Tf2LqxW8IeeDz"
       crossorigin="anonymous">
   <style>
       body {
@@ -50,16 +49,11 @@
     <pre id="logs"></pre>
   </div>
   
-  <!-- jQuery and Bootstrap JS via CDN -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-          integrity="sha384-ZvpUoO/+Pw5y39YtYBDiZfq58/+RMoh72NPOmKHn5mZbYzs9+Z9p7eW8Mp9tfoGe"
-          crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
-          integrity="sha384-B4gt1jrGC7Jh4Ag36QKYUvbsXU2SmfVJzTnA7JkwBHUQn6GAr5GUkbxVf8UJ0Z65"
-          crossorigin="anonymous"></script>
+  <!-- jQuery and Bootstrap JS via CDN without SRI -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
   <script>
       $(document).ready(function() {
-          // Debug message for form initialization
           console.log("Document is ready. Initializing form submission.");
 
           // Submit the form via AJAX so the page stays in one view
