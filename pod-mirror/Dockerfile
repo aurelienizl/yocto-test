@@ -54,6 +54,10 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chmod +x /home/generic/build_mirror.sh && \
     chown -R generic:generic /home/generic
 
+# Create mirror directories with correct ownership
+RUN mkdir -p /home/generic/yocto-mirror/downloads /home/generic/yocto-mirror/sstate-cache && \
+    chown -R generic:generic /home/generic/yocto-mirror
+
 # Expose port 80
 EXPOSE 80
 
