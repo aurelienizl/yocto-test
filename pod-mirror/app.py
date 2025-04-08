@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, Response
+from flask import Flask, request, render_template, Response, jsonify
 import subprocess
 import os
 import time
@@ -9,25 +9,28 @@ PROJECTS_FILE = '/home/generic/projects.txt'
 MIRROR_DIR = '/home/generic/yocto-mirror'
 LOG_FILE = '/home/generic/build_mirror.log'
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
-    if request.method == 'POST':
-        # Save the list of project URIs from the form
-        projects = request.form.get('projects', '').splitlines()
-        with open(PROJECTS_FILE, 'w') as f:
-            for project in projects:
-                f.write(project.strip() + '\n')
-        # Trigger the build process in the background
-        subprocess.Popen(['bash', '/home/generic/build_mirror.sh'])
-        return 'Mirror refresh started. This may take a while.'
+    # Load existing projects if the file exists
+    if os.path.exists(PROJECTS_FILE):
+        with open(PROJECTS_FILE, 'r') as f:
+            projects = f.read().splitlines()
     else:
-        # Load existing projects if the file exists
-        if os.path.exists(PROJECTS_FILE):
-            with open(PROJECTS_FILE, 'r') as f:
-                projects = f.read().splitlines()
-        else:
-            projects = []
-        return render_template('index.html', projects=projects)
+        projects = []
+    return render_template('index.html', projects=projects)
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    # Save the list of project URIs from the form
+    projects_text = request.form.get('projects', '')
+    projects = projects_text.splitlines()
+    with open(PROJECTS_FILE, 'w') as f:
+        for project in projects:
+            f.write(project.strip() + '\n')
+    # Trigger the build process in the background and log output
+    subprocess.Popen(['bash', '/home/generic/build_mirror.sh'])
+    # Return a JSON response indicating the refresh has started.
+    return jsonify({'message': 'Mirror refresh started. This may take a while.'})
 
 def stream_logs():
     """Generator function that yields new lines in the log file using SSE format."""
@@ -40,14 +43,12 @@ def stream_logs():
         while True:
             line = f.readline()
             if line:
-                # SSE requires the data field to be prefixed by 'data: '
                 yield f"data: {line.strip()}\n\n"
             else:
                 time.sleep(1)
 
 @app.route('/logs')
 def logs():
-    # Return a streaming response using the SSE MIME type
     return Response(stream_logs(), mimetype='text/event-stream')
 
 if __name__ == '__main__':

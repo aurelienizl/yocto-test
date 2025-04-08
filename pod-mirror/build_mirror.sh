@@ -19,12 +19,10 @@ while read -r uri; do
         echo "Cloning $uri into $clone_dir" >> $LOG_FILE
         # Clone the repository and log output
         git clone "$uri" "$clone_dir" >> $LOG_FILE 2>&1
-        if [ -d "$clone_dir/.config" ]; then
-            cd "$clone_dir/.config" || continue
-            if [ -f mirror.sh ]; then
-                echo "Running mirror.sh in $clone_dir/.config" >> $LOG_FILE
-                bash mirror.sh >> $LOG_FILE 2>&1
-            fi
+        if [ -f "$clone_dir/mirror.sh" ]; then
+            echo "Running mirror.sh in $clone_dir" >> $LOG_FILE
+            cd "$clone_dir" || continue
+            bash mirror.sh >> $LOG_FILE 2>&1
             cd - >> $LOG_FILE 2>&1
         fi
         # Clean up temporary clone
