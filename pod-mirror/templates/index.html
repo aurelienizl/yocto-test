@@ -58,48 +58,59 @@
           integrity="sha384-B4gt1jrGC7Jh4Ag36QKYUvbsXU2SmfVJzTnA7JkwBHUQn6GAr5GUkbxVf8UJ0Z65"
           crossorigin="anonymous"></script>
   <script>
-      // Submit the form via AJAX so the page stays in one view
-      $('#projectsForm').on('submit', function(e) {
-          e.preventDefault();
-          $.ajax({
-              type: 'POST',
-              url: '/submit',
-              data: $(this).serialize(),
-              success: function(response) {
-                  $('#alert-placeholder').html(
-                    `<div class="alert alert-success alert-dismissible fade show" role="alert">
-                        ${response.message}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>`
-                  );
-              },
-              error: function() {
-                  $('#alert-placeholder').html(
-                    `<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        An error occurred while starting the mirror refresh.
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>`
-                  );
-              }
-          });
-      });
+      $(document).ready(function() {
+          // Debug message for form initialization
+          console.log("Document is ready. Initializing form submission.");
 
-      // Connect to the SSE endpoint to display live logs
-      if (!!window.EventSource) {
-          var source = new EventSource('/logs');
-          source.onmessage = function(event) {
-              var logsElement = document.getElementById('logs');
-              logsElement.innerHTML += event.data + "\n";
-              // Auto-scroll to the bottom
-              logsElement.scrollTop = logsElement.scrollHeight;
-          };
-      } else {
-          document.getElementById('logs').innerText = 'Your browser does not support Server-Sent Events.';
-      }
+          // Submit the form via AJAX so the page stays in one view
+          $('#projectsForm').on('submit', function(e) {
+              e.preventDefault();
+              console.log("Form submitted.");
+              $.ajax({
+                  type: 'POST',
+                  url: '/submit',
+                  data: $(this).serialize(),
+                  success: function(response) {
+                      console.log("Response received:", response);
+                      $('#alert-placeholder').html(
+                        `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                            ${response.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>`
+                      );
+                  },
+                  error: function() {
+                      console.error("An error occurred during AJAX submission.");
+                      $('#alert-placeholder').html(
+                        `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            An error occurred while starting the mirror refresh.
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>`
+                      );
+                  }
+              });
+          });
+  
+          // Connect to the SSE endpoint to display live logs
+          if (!!window.EventSource) {
+              var source = new EventSource('/logs');
+              source.onmessage = function(event) {
+                  var logsElement = document.getElementById('logs');
+                  logsElement.innerHTML += event.data + "\n";
+                  // Auto-scroll to the bottom
+                  logsElement.scrollTop = logsElement.scrollHeight;
+              };
+              source.onerror = function(error) {
+                  console.error("SSE connection error:", error);
+              }
+          } else {
+              document.getElementById('logs').innerText = 'Your browser does not support Server-Sent Events.';
+          }
+      });
   </script>
 </body>
 </html>
