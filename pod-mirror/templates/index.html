@@ -2,109 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mirror Refresh Dashboard</title>
-  <!-- Bootstrap CSS via CDN without SRI -->
-  <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      crossorigin="anonymous">
+  <title>Git Mirror Runner</title>
+  <!-- Bootstrap CSS via CDN (SRI removed if mismatches occur) -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" crossorigin="anonymous">
   <style>
-      body {
-          background-color: #f8f9fa;
-          margin-top: 20px;
-      }
-      .container {
-          max-width: 800px;
-      }
-      #logs {
-          background-color: #1e1e1e;
-          color: #dcdcdc;
-          padding: 10px;
-          height: 400px;
-          overflow-y: scroll;
-          border-radius: 4px;
-          font-family: monospace;
-      }
-      textarea {
-          resize: vertical;
-      }
+      body { background-color: #f8f9fa; margin-top: 20px; }
+      .container { max-width: 600px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 class="mb-4 text-center">Mirror Refresh Dashboard</h1>
+    <h1 class="mb-4 text-center">Git Mirror Runner</h1>
     <div id="alert-placeholder"></div>
-    <form id="projectsForm">
+    <form id="gitForm">
       <div class="form-group">
-        <label for="projects">Project URIs (one per line):</label>
-        <textarea class="form-control" id="projects" name="projects" rows="6">{% for project in projects %}{{ project }}
-{% endfor %}</textarea>
+        <label for="git_uri">Git Repository URI:</label>
+        <input type="text" class="form-control" id="git_uri" name="git_uri" placeholder="https://github.com/username/repository.git">
       </div>
-      <button type="submit" class="btn btn-primary">Start Mirror Refresh</button>
+      <button type="submit" class="btn btn-primary btn-block">Run Mirror Process</button>
     </form>
-    
-    <hr>
-    
-    <h2 class="mt-4">Live Logs</h2>
-    <pre id="logs"></pre>
   </div>
   
-  <!-- jQuery and Bootstrap JS via CDN without SRI -->
+  <!-- jQuery and Bootstrap JS via CDN (SRI removed if mismatches occur) -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
   <script>
-      $(document).ready(function() {
-          console.log("Document is ready. Initializing form submission.");
-
-          // Submit the form via AJAX so the page stays in one view
-          $('#projectsForm').on('submit', function(e) {
-              e.preventDefault();
-              console.log("Form submitted.");
-              $.ajax({
-                  type: 'POST',
-                  url: '/submit',
-                  data: $(this).serialize(),
-                  success: function(response) {
-                      console.log("Response received:", response);
-                      $('#alert-placeholder').html(
-                        `<div class="alert alert-success alert-dismissible fade show" role="alert">
-                            ${response.message}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>`
-                      );
-                  },
-                  error: function() {
-                      console.error("An error occurred during AJAX submission.");
-                      $('#alert-placeholder').html(
-                        `<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            An error occurred while starting the mirror refresh.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>`
-                      );
-                  }
-              });
-          });
-  
-          // Connect to the SSE endpoint to display live logs
-          if (!!window.EventSource) {
-              var source = new EventSource('/logs');
-              source.onmessage = function(event) {
-                  var logsElement = document.getElementById('logs');
-                  logsElement.innerHTML += event.data + "\n";
-                  // Auto-scroll to the bottom
-                  logsElement.scrollTop = logsElement.scrollHeight;
-              };
-              source.onerror = function(error) {
-                  console.error("SSE connection error:", error);
-              }
-          } else {
-              document.getElementById('logs').innerText = 'Your browser does not support Server-Sent Events.';
-          }
-      });
+    $(document).ready(function() {
+        $('#gitForm').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: '/run',
+                data: $(this).serialize(),
+                success: function(response) {
+                    $('#alert-placeholder').html(
+                      `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                         ${response.message}
+                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                           <span aria-hidden="true">&times;</span>
+                         </button>
+                      </div>`
+                    );
+                },
+                error: function(xhr) {
+                    let errMsg = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
+                    $('#alert-placeholder').html(
+                      `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                         ${errMsg}
+                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                           <span aria-hidden="true">&times;</span>
+                         </button>
+                      </div>`
+                    );
+                }
+            });
+        });
+    });
   </script>
 </body>
 </html>
