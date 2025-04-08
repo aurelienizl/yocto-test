@@ -1,4 +1,5 @@
 #!/bin/bash
+export HOME=/home/generic
 
 LOG_FILE=/home/generic/build_mirror.log
 PROJECTS_FILE=/home/generic/projects.txt
