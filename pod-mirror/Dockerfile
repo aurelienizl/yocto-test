@@ -60,6 +60,7 @@ RUN mkdir -p /home/generic/yocto-mirror/downloads /home/generic/yocto-mirror/sst
 
 # Expose port 80
 EXPOSE 80
+EXPOSE 5000
 
 # Run supervisord to manage Nginx and Flask
 CMD ["/usr/bin/supervisord"]
