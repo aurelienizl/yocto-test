@@ -1,8 +1,12 @@
 #!/bin/bash
 
+LOG_FILE=/home/generic/build_mirror.log
 PROJECTS_FILE=/home/generic/projects.txt
 MIRROR_DIR=/home/generic/yocto-mirror
 TEMP_DIR=/home/generic/temp
+
+# Clean or create the log file
+: > $LOG_FILE
 
 # Create temporary directory for cloning
 mkdir -p $TEMP_DIR
@@ -10,19 +14,20 @@ mkdir -p $TEMP_DIR
 # Read each URI from the projects file
 while read -r uri; do
     if [ -n "$uri" ]; then
-        repo_name=$(basename $uri .git)
+        repo_name=$(basename "$uri" .git)
         clone_dir=$TEMP_DIR/$repo_name
-        # Clone the repository
-        git clone $uri $clone_dir
-        if [ -d $clone_dir/.config ]; then
-            cd $clone_dir/.config
+        echo "Cloning $uri into $clone_dir" >> $LOG_FILE
+        # Clone the repository and log output
+        git clone "$uri" "$clone_dir" >> $LOG_FILE 2>&1
+        if [ -d "$clone_dir/.config" ]; then
+            cd "$clone_dir/.config" || continue
             if [ -f mirror.sh ]; then
-                # Execute mirror.sh to populate the mirror
-                bash mirror.sh
+                echo "Running mirror.sh in $clone_dir/.config" >> $LOG_FILE
+                bash mirror.sh >> $LOG_FILE 2>&1
             fi
-            cd -
+            cd - >> $LOG_FILE 2>&1
         fi
         # Clean up temporary clone
-        rm -rf $clone_dir
+        rm -rf "$clone_dir"
     fi
-done < $PROJECTS_FILE
+done < "$PROJECTS_FILE"

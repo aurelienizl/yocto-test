@@ -1,15 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Yocto Mirror Manager</title>
+    <title>Mirror Refresh</title>
 </head>
 <body>
-    <h1>Yocto Mirror Manager</h1>
-    <form method="post">
-        <textarea name="projects" rows="10" cols="50">{{ '\n'.join(projects) }}</textarea><br>
-        <input type="submit" value="Refresh Mirror">
+    <h1>Project URIs</h1>
+    <form method="POST">
+        <textarea name="projects" rows="10" cols="50">{% for project in projects %}{{ project }}
+{% endfor %}</textarea>
+        <br>
+        <input type="submit" value="Start Mirror Refresh">
     </form>
-    <p>Access mirror files at <a href="/mirror/">/mirror/</a></p>
+
+    <h2>Live Logs</h2>
+    <pre id="logs" style="background-color:#f0f0f0; padding: 10px; height: 400px; overflow: auto;"></pre>
+
+    <script>
+        if (!!window.EventSource) {
+            var source = new EventSource('/logs');
+            source.onmessage = function(event) {
+                var logsElement = document.getElementById('logs');
+                logsElement.innerHTML += event.data + "\n";
+                // Auto scroll to bottom
+                logsElement.scrollTop = logsElement.scrollHeight;
+            };
+        } else {
+            document.getElementById('logs').innerText = 'Your browser does not support Server-Sent Events.';
+        }
+    </script>
 </body>
 </html>
