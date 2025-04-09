@@ -48,12 +48,10 @@ RUN git config --global user.email "yocto-build@epita.fr" && git config --global
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY app.py /home/generic/app.py
 COPY templates /home/generic/templates
-COPY build_mirror.sh /home/generic/build_mirror.sh
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set permissions
-RUN chmod +x /home/generic/build_mirror.sh && \
-    chown -R generic:generic /home/generic
+RUN chown -R generic:generic /home/generic
 
 # Create mirror directories with correct ownership
 RUN mkdir -p /home/generic/yocto-mirror/downloads /home/generic/yocto-mirror/sstate-cache && \
