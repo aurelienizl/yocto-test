@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Git Mirror Runner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Bootstrap CSS via CDN -->
+  <!-- Bootstrap CSS via CDN (SRI attributes removed if needed) -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" crossorigin="anonymous">
   <style>
       body { background-color: #f8f9fa; margin-top: 20px; }
@@ -36,40 +35,44 @@
     <pre id="logs"></pre>
   </div>
 
-  <!-- jQuery and Bootstrap JS via CDN -->
+  <!-- jQuery and Bootstrap JS via CDN (SRI attributes removed if needed) -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
   <script>
+    // Use relative URLs so that the code is URI agnostic.
     $(document).ready(function() {
-        // Use relative paths so this code is URI agnostic.
         $('#gitForm').on('submit', function(e) {
             e.preventDefault();
             $.ajax({
                 type: 'POST',
-                // The endpoint "run" is relative to the current document URL.
+                // Relative URL to POST the Git URI (e.g. "run" becomes /admin/run if this file is served at /admin/)
                 url: 'run',
                 data: $(this).serialize(),
                 success: function(response) {
                     $('#alert-placeholder').html(
-                      '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                        response.message +
-                        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-                        '<span aria-hidden="true">&times;</span></button></div>'
+                      `<div class="alert alert-success alert-dismissible fade show" role="alert">
+                         ${response.message}
+                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                           <span aria-hidden="true">&times;</span>
+                         </button>
+                      </div>`
                     );
                 },
                 error: function(xhr) {
-                    var errMsg = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
+                    let errMsg = xhr.responseJSON ? xhr.responseJSON.error : "An error occurred.";
                     $('#alert-placeholder').html(
-                      '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                        errMsg +
-                        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-                        '<span aria-hidden="true">&times;</span></button></div>'
+                      `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                         ${errMsg}
+                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                           <span aria-hidden="true">&times;</span>
+                         </button>
+                      </div>`
                     );
                 }
             });
         });
 
-        // Use relative URL for the SSE endpoint so this code is URI agnostic.
+        // Use a relative URL for the Server-Sent Events endpoint.
         if (window.EventSource) {
             var source = new EventSource('logs');
             source.onmessage = function(event) {
@@ -81,7 +84,7 @@
                 console.error("SSE connection error:", error);
             };
         } else {
-            $('#logs').text('Your browser does not support live log streaming.');
+            document.getElementById('logs').innerText = 'Your browser does not support live log streaming.';
         }
     });
   </script>
