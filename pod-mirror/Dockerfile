@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-MAINTAINER Aurelien Izoulet <aurelien.izoulet@epita.fr>
+LABEL org.opencontainers.image.authors="aurelien.izoulet@epita.fr"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
