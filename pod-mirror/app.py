@@ -15,9 +15,8 @@ operation_running = False
 
 class GitMirrorRunner:
     """
-    A class that clones a Git repository (given its URI), executes the mirror script
-    at .config/mirror.sh (if present), and cleans up the temporary clone.
-    All log messages are written to LOG_FILE.
+    A class that clones a Git repository, executes the mirror script (if present),
+    and cleans up the temporary clone. All log messages are written to LOG_FILE.
     """
     def __init__(self, git_uri, temp_dir=TEMP_DIR, log_file=LOG_FILE):
         self.git_uri = git_uri
@@ -44,6 +43,11 @@ class GitMirrorRunner:
         """
         # Ensure the temporary directory exists.
         os.makedirs(self.temp_dir, exist_ok=True)
+
+        # Prepare a clean environment for subprocesses.
+        env = os.environ.copy()
+        env['HOME'] = '/home/generic'
+
         self._log(f"Cloning {self.git_uri} into {self.clone_dir}")
 
         try:
@@ -52,6 +56,7 @@ class GitMirrorRunner:
                     ["git", "clone", self.git_uri, self.clone_dir],
                     stdout=log_f,
                     stderr=subprocess.STDOUT,
+                    env=env,
                     check=True
                 )
         except subprocess.CalledProcessError as e:
@@ -69,6 +74,7 @@ class GitMirrorRunner:
                         cwd=self.clone_dir,  # set working directory to repo's root
                         stdout=log_f,
                         stderr=subprocess.STDOUT,
+                        env=env,
                         check=True
                     )
             except subprocess.CalledProcessError as e:
