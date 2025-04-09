@@ -13,4 +13,4 @@ grep -qxF 'BB_GENERATE_MIRROR_TARBALLS = "1"' $LOCAL_CONF || echo 'BB_GENERATE_M
 
 ### Your targets must be run here ###
 
-bitbake core-image-minimal
+bitbake core-image-minimal --runall=fetch
