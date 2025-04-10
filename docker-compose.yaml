@@ -1,12 +1,32 @@
-version: '3'
+version: '3.8'
 services:
-  mirror:
-    build: ./pod-mirror
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
     volumes:
       - mirror-data:/home/generic/yocto-mirror
+    networks:
+      - internal
+    expose:
+      - "5000"
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
-      - "5000:5000"
+    volumes:
+      - mirror-data:/yocto-mirror
+    depends_on:
+      - python
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
 
 volumes:
   mirror-data:
