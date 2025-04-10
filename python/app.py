@@ -61,15 +61,24 @@ def remove_task():
         tasks_queue[:] = [t for t in tasks_queue if t.id != task_id]
     return jsonify({"message": f"Task {task_id} removed from queue."})
 
-@app.route('/logs/<task_id>')
-def get_logs(task_id):
-    """Return log file for a given task."""
+@app.route('/stream_logs/<task_id>')
+def stream_logs(task_id):
     task = tasks.get(task_id)
     if not task:
         return "Task not found.", 404
-    if not os.path.exists(task.log_file):
-        return "No log available yet.", 404
-    return send_file(task.log_file)
+
+    def generate():
+        with open(task.log_file, 'r') as f:
+            # Do not seek to the end if you want all logs to be streamed.
+            # Remove or comment out the next line:
+            # f.seek(0, os.SEEK_END)
+            while True:
+                line = f.readline()
+                if line:
+                    yield f"data: {line}\n\n"
+                else:
+                    time.sleep(1)
+    return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/stream_logs/<task_id>')
 def stream_logs(task_id):

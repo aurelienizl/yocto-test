@@ -56,6 +56,7 @@ class GitMirrorRunner:
         log_message = f"[{timestamp}] {message}"
         with open(self.log_file, 'a') as f:
             f.write(log_message + "\n")
+            f.flush()  # Ensure the log is immediately written
         print(log_message)
 
     def run_command(self, command, cwd=None, env=None):
