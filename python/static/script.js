@@ -111,8 +111,23 @@ $(document).ready(function() {
       };
       window.logEventSource.onerror = function(error) {
         console.error("Error in log stream", error);
+      
+        // Optionally, close and attempt to re-establish the connection after a delay
         window.logEventSource.close();
-      };
+        
+        setTimeout(function() {
+          // Recreate the EventSource connection if a task is selected
+          var taskId = $('#logTaskSelect').val();
+          if(taskId) {
+            window.logEventSource = new EventSource('/stream_logs/' + taskId);
+            window.logEventSource.onmessage = function(event) {
+              $('#logs').append(event.data + '<br>');
+              $('#logs').scrollTop($('#logs')[0].scrollHeight);
+            };
+            window.logEventSource.onerror = arguments.callee; // reassign this error handler
+          }
+        }, 5000); // reconnect after 5 seconds
+      };      
     });
   });
   
