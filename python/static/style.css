@@ -1,45 +1,50 @@
-body {
-  background-color: #f8f9fa;
-  font-family: Arial, sans-serif;
+/* Ensure the html and body elements take up the full height */
+html, body {
+  height: 100%;
   margin: 0;
-  padding: 20px;
+  padding: 0;
 }
 
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
+/* Use Flexbox layout on body to position footer at the bottom */
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #f8f9fa;
 }
 
-h1, h2 {
-  color: #333;
+/* Main content grows to fill available space */
+main {
+  flex: 1;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
+/* Navbar styling */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-table, th, td {
-  border: 1px solid #ccc;
+/* Card header styling */
+.card-header {
+  font-weight: bold;
 }
 
-th, td {
-  padding: 8px;
-  text-align: left;
+/* Footer styling */
+.footer {
+  background-color: #343a40;
+  color: #ffffff;
 }
 
-button {
-  padding: 5px 10px;
-  font-size: 14px;
+/* Log Modal Styling */
+#logPre {
+  background-color: #e9ecef;
+  padding: 15px;
+  border-radius: 5px;
+  height: 400px;
+  overflow-y: auto;
+  font-size: 0.9em;
 }
 
-#logs {
-  background-color: #1e1e1e;
-  color: #dcdcdc;
-  height: 300px;
-  overflow-y: scroll;
-  padding: 10px;
-  border-radius: 4px;
-  font-family: monospace;
+/* Table row hover effect */
+table tbody tr:hover {
+  background-color: #f1f1f1;
 }

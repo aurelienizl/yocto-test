@@ -1,133 +1,92 @@
 $(document).ready(function() {
-    function refreshTasks() {
-      $.getJSON('/tasks', function(data) {
-        var currentTask = null, queueTasks = [], finishedTasks = [];
-        var logSelectOptions = '<option value="">Select a task</option>';
-        $.each(data, function(i, task) {
-          if(task.status === "running") {
-            currentTask = task;
-          } else if(task.status === "queued") {
-            queueTasks.push(task);
-          } else if(task.status === "finished" || task.status === "failed" || task.status === "canceled") {
-            finishedTasks.push(task);
-          }
-          logSelectOptions += '<option value="'+ task.id +'">'+ task.git_uri +' ('+ task.status +')</option>';
-        });
+  // Function to load tasks from the server
+  function loadTasks() {
+    $.getJSON('/tasks', function(data) {
+      var tableBody = $('#tasksTable tbody');
+      tableBody.empty();
+      $.each(data, function(index, task) {
+        var tr = $('<tr>');
+        // Shorten the task id for display purposes
+        tr.append($('<td>').text(task.id.substring(0, 8)));
+        tr.append($('<td>').text(task.git_uri));
+        tr.append($('<td>').html('<span class="badge badge-info">' + task.status + '</span>'));
+        tr.append($('<td>').text(new Date(task.created_at).toLocaleString()));
         
-        // Update current task display.
-        if(currentTask) {
-          $('#currentTaskInfo').html(
-            '<p><strong>ID:</strong> ' + currentTask.id + '<br>' +
-            '<strong>Repo:</strong> ' + currentTask.git_uri + '<br>' +
-            '<strong>Started:</strong> ' + currentTask.started_at + '</p>'
-          );
-          $('#killTaskBtn').show();
-        } else {
-          $('#currentTaskInfo').html('<p>No task is currently running.</p>');
-          $('#killTaskBtn').hide();
+        var actions = $('<td>');
+        // Display "Kill" button for running tasks
+        if (task.status === 'running') {
+          actions.append('<button class="btn btn-warning btn-sm mr-1 kill-btn" data-id="' + task.id + '">Kill</button>');
         }
-        
-        // Update pending tasks table.
-        var queueHtml = '';
-        $.each(queueTasks, function(i, task) {
-          queueHtml += '<tr>' +
-                       '<td>' + task.id + '</td>' +
-                       '<td>' + task.git_uri + '</td>' +
-                       '<td>' + task.created_at + '</td>' +
-                       '<td><button class="removeTask" data-taskid="'+task.id+'">Remove</button></td>' +
-                       '</tr>';
-        });
-        $('#queueTable tbody').html(queueHtml);
-        
-        // Update finished tasks table.
-        var finishedHtml = '';
-        $.each(finishedTasks, function(i, task) {
-          finishedHtml += '<tr>' +
-                          '<td>' + task.id + '</td>' +
-                          '<td>' + task.git_uri + '</td>' +
-                          '<td>' + task.status + '</td>' +
-                          '<td>' + (task.started_at || '-') + '</td>' +
-                          '<td>' + (task.finished_at || '-') + '</td>' +
-                          '<td><a href="/logs/'+ task.id +'" target="_blank">View</a></td>' +
-                          '</tr>';
-        });
-        $('#finishedTable tbody').html(finishedHtml);
-        
-        $('#logTaskSelect').html(logSelectOptions);
-      });
-    }
-    
-    refreshTasks();
-    setInterval(refreshTasks, 5000);
-    
-    // Enqueue repository.
-    $('#enqueueForm').submit(function(e) {
-      e.preventDefault();
-      $.post('/enqueue', $(this).serialize(), function(response) {
-        alert(response.message);
-        refreshTasks();
-      }).fail(function(xhr) {
-        alert(xhr.responseJSON.error);
+        // Display "Remove" button for queued tasks
+        if (task.status === 'queued') {
+          actions.append('<button class="btn btn-danger btn-sm mr-1 remove-btn" data-id="' + task.id + '">Remove</button>');
+        }
+        // Log button available for any task
+        actions.append('<button class="btn btn-primary btn-sm log-btn" data-id="' + task.id + '">Logs</button>');
+        tr.append(actions);
+        tableBody.append(tr);
       });
     });
-    
-    // Remove a queued task.
-    $(document).on('click', '.removeTask', function() {
-      var taskId = $(this).data('taskid');
-      $.post('/remove', { task_id: taskId }, function(response) {
-        alert(response.message);
-        refreshTasks();
-      }).fail(function(xhr) {
-        alert(xhr.responseJSON.error);
-      });
-    });
-    
-    // Kill the current task.
-    $('#killTaskBtn').click(function() {
-      if(confirm("Are you sure you want to kill the running task?")) {
-        $.post('/kill', function(response) {
-          alert(response.message);
-          refreshTasks();
-        }).fail(function(xhr) {
-          alert(xhr.responseJSON.error);
-        });
-      }
-    });
-    
-    // Stream logs for the selected task.
-    $('#logTaskSelect').change(function() {
-      var taskId = $(this).val();
-      if(window.logEventSource) {
-        window.logEventSource.close();
-      }
-      if(!taskId) {
-        $('#logs').html('');
-        return;
-      }
-      window.logEventSource = new EventSource('/stream_logs/' + taskId);
-      window.logEventSource.onmessage = function(event) {
-        $('#logs').append(event.data + '<br>');
-        $('#logs').scrollTop($('#logs')[0].scrollHeight);
-      };
-      window.logEventSource.onerror = function(error) {
-        console.error("Error in log stream", error);
-      
-        // Optionally, close and attempt to re-establish the connection after a delay
-        window.logEventSource.close();
-        
-        setTimeout(function() {
-          // Recreate the EventSource connection if a task is selected
-          var taskId = $('#logTaskSelect').val();
-          if(taskId) {
-            window.logEventSource = new EventSource('/stream_logs/' + taskId);
-            window.logEventSource.onmessage = function(event) {
-              $('#logs').append(event.data + '<br>');
-              $('#logs').scrollTop($('#logs')[0].scrollHeight);
-            };
-            window.logEventSource.onerror = arguments.callee; // reassign this error handler
-          }
-        }, 5000); // reconnect after 5 seconds
-      };      
+  }
+
+  // Initial load
+  loadTasks();
+  // Refresh tasks list every 5 seconds
+  setInterval(loadTasks, 5000);
+
+  // Handle task submission
+  $('#taskForm').submit(function(e) {
+    e.preventDefault();
+    var gitUri = $('#gitUri').val();
+    $.post('/enqueue', { git_uri: gitUri }, function(response) {
+      alert(response.message);
+      $('#gitUri').val('');
+      loadTasks();
+    }).fail(function(xhr) {
+      alert(xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred while enqueuing the task.');
     });
   });
-  
+
+  // Kill task action
+  $('#tasksTable').on('click', '.kill-btn', function() {
+    var taskId = $(this).data('id');
+    $.post('/kill', { task_id: taskId }, function(response) {
+      alert(response.message);
+      loadTasks();
+    }).fail(function(xhr) {
+      alert(xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred while killing the task.');
+    });
+  });
+
+  // Remove task action
+  $('#tasksTable').on('click', '.remove-btn', function() {
+    var taskId = $(this).data('id');
+    $.post('/remove', { task_id: taskId }, function(response) {
+      alert(response.message);
+      loadTasks();
+    }).fail(function(xhr) {
+      alert(xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred while removing the task.');
+    });
+  });
+
+  // Open log modal to display logs
+  $('#tasksTable').on('click', '.log-btn', function() {
+    var taskId = $(this).data('id');
+    $('#logPre').text("Loading logs...");
+    $('#logModal').modal('show');
+    $.get('/logs/' + taskId)
+      .done(function(data) {
+        $('#logPre').text(data);
+      })
+      .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log('Log fetch failed:', textStatus, errorThrown);
+        $('#logPre').text("No logs available or an error occurred while retrieving logs.");
+      });
+  });
+
+  // Manual close action for modal
+  $('#logModal .close, #logModal .btn-secondary').on('click', function() {
+    console.log('Close button clicked');
+    $('#logModal').modal('hide');
+  });
+});

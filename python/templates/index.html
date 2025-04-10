@@ -2,84 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Git Mirror Runner Dashboard</title>
-  <!-- Use Flask's url_for to reference CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Mirror Task Manager</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- Include external JS libraries -->
-  <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
-  <!-- Reference the external JavaScript file -->
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Git Mirror Runner Dashboard</h1>
-    
-    <!-- Enqueue New Repository -->
-    <section id="enqueue">
-      <h2>Add Repository</h2>
-      <form id="enqueueForm">
-        <label for="git_uri">Git Repository (HTTPS):</label>
-        <input type="text" id="git_uri" name="git_uri" placeholder="https://github.com/username/repository.git" required>
-        <button type="submit">Enqueue Repository</button>
-      </form>
-    </section>
-    
-    <!-- Current Running Task -->
-    <section id="currentTask">
-      <h2>Current Running Task</h2>
-      <div id="currentTaskInfo">
-        <p>No task is currently running.</p>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+    <a class="navbar-brand" href="#">Mirror Task Manager</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" 
+            data-target="#navbarNav" aria-controls="navbarNav" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <div class="navbar-nav ml-auto">
+        <span class="navbar-text text-light">Status: <span id="currentStatus">Idle</span></span>
       </div>
-      <button id="killTaskBtn" style="display:none;">Kill Running Task</button>
-    </section>
-    
-    <!-- Pending Tasks Queue -->
-    <section id="queue">
-      <h2>Pending Tasks Queue</h2>
-      <table id="queueTable">
-        <thead>
-          <tr>
-            <th>Task ID</th>
-            <th>Repository</th>
-            <th>Created At</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Filled dynamically by script.js -->
-        </tbody>
-      </table>
-    </section>
-    
-    <!-- Finished/Failed Tasks -->
-    <section id="finished">
-      <h2>Finished / Failed Tasks</h2>
-      <table id="finishedTable">
-        <thead>
-          <tr>
-            <th>Task ID</th>
-            <th>Repository</th>
-            <th>Status</th>
-            <th>Started At</th>
-            <th>Finished At</th>
-            <th>Logs</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Filled dynamically by script.js -->
-        </tbody>
-      </table>
-    </section>
-    
-    <!-- Logs Viewer -->
-    <section id="logsViewer">
-      <h2>Logs Viewer</h2>
-      <select id="logTaskSelect">
-        <option value="">Select a task</option>
-      </select>
-      <div id="logs"></div>
-    </section>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container mt-4">
+    <!-- Task Submission Form -->
+    <div class="card mb-4">
+      <div class="card-header">Enqueue New Task</div>
+      <div class="card-body">
+        <form id="taskForm">
+          <div class="form-group">
+            <label for="gitUri">Git Repository URI</label>
+            <input type="url" class="form-control" id="gitUri" placeholder="Enter Git URI" required>
+          </div>
+          <button type="submit" class="btn btn-success">Enqueue Task</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="card">
+      <div class="card-header">Tasks Queue</div>
+      <div class="card-body">
+        <table class="table table-striped" id="tasksTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Git URI</th>
+              <th>Status</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamic rows will be injected here by script.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer bg-dark text-white">
+    <div class="container text-center py-3">
+      <span>© 2025 Mirror Task Manager. All Rights Reserved.</span>
+    </div>
+  </footer>
+
+  <!-- Log Modal -->
+  <div class="modal fade" id="logModal" tabindex="-1" role="dialog" aria-labelledby="logModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logModalLabel">Task Logs</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <pre id="logPre"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- jQuery and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
