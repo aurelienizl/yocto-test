@@ -31,7 +31,7 @@ RUN dpkg --add-architecture i386 && \
         screen \
         libncursesw5 \
         libncursesw5:i386 \
-        python \
+        python-is-python3 \
         python3 \
         man \
         bash \
