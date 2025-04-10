@@ -2,99 +2,68 @@ import os
 import time
 import datetime
 from flask import Flask, request, render_template, jsonify, Response, send_file
-from mirror import (
-    Task,
-    tasks_lock,
-    tasks_queue,
-    tasks,
-    new_task_cond,
-    currently_running_task,
-)
+from job_queue import job_queue, Job  # Import the global job_queue and Job
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
 @app.route("/enqueue", methods=["POST"])
 def enqueue():
-    """Enqueue a new Git repository task."""
+    """Enqueue a new Git repository job."""
     git_uri = request.form.get("git_uri", "").strip()
     if not git_uri:
         return jsonify({"error": "No Git URI provided"}), 400
-    task = Task(git_uri)
-    with tasks_lock:
-        tasks[task.id] = task
-        tasks_queue.append(task)
-        new_task_cond.notify()
-    return jsonify({"message": "Task enqueued successfully", "task": task.to_dict()})
-
+    job = Job(git_uri)
+    job_queue.add_job(job)
+    return jsonify({"message": "Job enqueued successfully", "job": job.to_dict()})
 
 @app.route("/tasks", methods=["GET"])
-def get_tasks():
-    """Return JSON list of all tasks."""
-    with tasks_lock:
-        all_tasks = [task.to_dict() for task in tasks.values()]
-    return jsonify(all_tasks)
-
+def get_jobs():
+    """Return a JSON list of all jobs."""
+    return jsonify(job_queue.get_jobs())
 
 @app.route("/kill", methods=["POST"])
-def kill_task():
-    """Kill the currently running task."""
-    global currently_running_task
-    with tasks_lock:
-        if currently_running_task and currently_running_task.runner:
-            currently_running_task.runner.kill()
-            currently_running_task.status = "canceled"
-            currently_running_task.finished_at = datetime.datetime.utcnow().isoformat()
-            message = f"Task {currently_running_task.id} killed."
-        else:
-            return jsonify({"error": "No running task to kill."}), 400
+def kill_job():
+    """Kill the currently running job."""
+    success, message = job_queue.kill_current_job()
+    if not success:
+        return jsonify({"error": message}), 400
     return jsonify({"message": message})
 
-
 @app.route("/remove", methods=["POST"])
-def remove_task():
-    """Remove a queued task from the queue."""
-    task_id = request.form.get("task_id", "").strip()
-    if not task_id:
-        return jsonify({"error": "No task ID provided"}), 400
-    with tasks_lock:
-        task = tasks.get(task_id)
-        if not task:
-            return jsonify({"error": "Task not found."}), 404
-        if task.status != "queued":
-            return jsonify({"error": "Only queued tasks can be removed."}), 400
-        task.status = "canceled"
-        task.finished_at = datetime.datetime.utcnow().isoformat()
-        tasks_queue[:] = [t for t in tasks_queue if t.id != task_id]
-    return jsonify({"message": f"Task {task_id} removed from queue."})
+def remove_job():
+    """Remove a queued job from the queue."""
+    job_id = request.form.get("job_id", "").strip()
+    if not job_id:
+        return jsonify({"error": "No job ID provided"}), 400
+    success, message = job_queue.remove_job(job_id)
+    if not success:
+        return jsonify({"error": message}), 400
+    return jsonify({"message": message})
 
-
-@app.route("/logs/<task_id>")
-def get_logs(task_id):
-    """Return log file for a given task."""
-    task = tasks.get(task_id)
-    if not task:
-        return "Task not found.", 404
-    if not os.path.exists(task.log_file):
+@app.route("/logs/<job_id>")
+def get_logs(job_id):
+    """Return the log file for a given job."""
+    job = job_queue.jobs.get(job_id)
+    if not job:
+        return "Job not found.", 404
+    if not os.path.exists(job.log_file):
         return "No log available yet.", 404
-    return send_file(task.log_file)
+    return send_file(job.log_file)
 
-
-@app.route("/stream_logs/<task_id>")
-def stream_logs(task_id):
-    task = tasks.get(task_id)
-    if not task:
-        return "Task not found.", 404
+@app.route("/stream_logs/<job_id>")
+def stream_logs(job_id):
+    """Stream a job's log file."""
+    job = job_queue.jobs.get(job_id)
+    if not job:
+        return "Job not found.", 404
 
     def generate():
-        with open(task.log_file, "r") as f:
-            # Do not seek to the end if you want all logs to be streamed.
-            # Remove or comment out the next line:
+        with open(job.log_file, "r") as f:
+            # Uncomment the next line if you wish to start at the end of file:
             # f.seek(0, os.SEEK_END)
             while True:
                 line = f.readline()
@@ -102,7 +71,6 @@ def stream_logs(task_id):
                     yield f"data: {line}\n\n"
                 else:
                     time.sleep(1)
-
     return Response(
         generate(),
         mimetype="text/event-stream",
@@ -112,16 +80,14 @@ def stream_logs(task_id):
         },
     )
 
-
 @app.route("/current")
-def current_task():
-    """Return the currently running task, if any."""
-    with tasks_lock:
-        if currently_running_task:
-            return jsonify(currently_running_task.to_dict())
-        else:
-            return jsonify({"message": "No task is currently running."})
-
+def current_job():
+    """Return the currently running job, if any."""
+    current = job_queue.get_current_job()
+    if current:
+        return jsonify(current)
+    else:
+        return jsonify({"message": "No job is currently running."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

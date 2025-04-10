@@ -1,4 +1,22 @@
 $(document).ready(function() {
+  // Maps a task status to a Bootstrap badge class.
+  function getBadgeClass(status) {
+    switch (status) {
+      case 'queued':
+        return 'badge-secondary';
+      case 'running':
+        return 'badge-warning';
+      case 'finished':
+        return 'badge-success';
+      case 'failed':
+        return 'badge-danger';
+      case 'canceled':
+        return 'badge-dark';
+      default:
+        return 'badge-info';
+    }
+  }
+
   // Function to load tasks from the server
   function loadTasks() {
     $.getJSON('/tasks', function(data) {
@@ -9,7 +27,8 @@ $(document).ready(function() {
         // Shorten the task id for display purposes
         tr.append($('<td>').text(task.id.substring(0, 8)));
         tr.append($('<td>').text(task.git_uri));
-        tr.append($('<td>').html('<span class="badge badge-info">' + task.status + '</span>'));
+        // Use the getBadgeClass() to assign a color class to the badge.
+        tr.append($('<td>').html('<span class="badge ' + getBadgeClass(task.status) + '">' + task.status + '</span>'));
         tr.append($('<td>').text(new Date(task.created_at).toLocaleString()));
         
         var actions = $('<td>');
@@ -29,12 +48,30 @@ $(document).ready(function() {
     });
   }
 
-  // Initial load
-  loadTasks();
-  // Refresh tasks list every 5 seconds
-  setInterval(loadTasks, 5000);
+  // Function to update the status displayed in the navbar.
+  function updateCurrentStatus() {
+    $.getJSON('/current', function(data) {
+      // If the returned JSON contains an "id", a job is running.
+      if (data.hasOwnProperty("id")) {
+        $('#currentStatus').text("Running (" + data.git_uri + ")");
+      } else {
+        $('#currentStatus').text("Idle");
+      }
+    }).fail(function() {
+      $('#currentStatus').text("Unknown");
+    });
+  }
 
-  // Handle task submission
+  // Initial load of tasks and current status.
+  loadTasks();
+  updateCurrentStatus();
+
+  // Refresh tasks list every 5 seconds.
+  setInterval(loadTasks, 5000);
+  // Refresh current status every 2 seconds.
+  setInterval(updateCurrentStatus, 2000);
+
+  // Handle task submission.
   $('#taskForm').submit(function(e) {
     e.preventDefault();
     var gitUri = $('#gitUri').val();
@@ -47,7 +84,7 @@ $(document).ready(function() {
     });
   });
 
-  // Kill task action
+  // Kill task action.
   $('#tasksTable').on('click', '.kill-btn', function() {
     var taskId = $(this).data('id');
     $.post('/kill', { task_id: taskId }, function(response) {
@@ -58,10 +95,10 @@ $(document).ready(function() {
     });
   });
 
-  // Remove task action
+  // Remove task action.
   $('#tasksTable').on('click', '.remove-btn', function() {
     var taskId = $(this).data('id');
-    $.post('/remove', { task_id: taskId }, function(response) {
+    $.post('/remove', { job_id: taskId }, function(response) {
       alert(response.message);
       loadTasks();
     }).fail(function(xhr) {
@@ -69,7 +106,7 @@ $(document).ready(function() {
     });
   });
 
-  // Open log modal to display logs
+  // Open log modal to display logs.
   $('#tasksTable').on('click', '.log-btn', function() {
     var taskId = $(this).data('id');
     $('#logPre').text("Loading logs...");
@@ -84,7 +121,7 @@ $(document).ready(function() {
       });
   });
 
-  // Manual close action for modal
+  // Manual close action for modal.
   $('#logModal .close, #logModal .btn-secondary').on('click', function() {
     console.log('Close button clicked');
     $('#logModal').modal('hide');
