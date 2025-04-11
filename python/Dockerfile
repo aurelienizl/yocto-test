@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.9-slim AS base
+FROM ubuntu:22.04 AS base
 
 # Set environment variables for performance and consistency
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -74,7 +74,6 @@ RUN dpkg --add-architecture i386 && \
         unzip \
         zip \
         nginx \
-        supervisor \
         python3-pip && \
     # Install Flask via pip (pin version as needed)
     pip3 install --no-cache-dir flask && \
