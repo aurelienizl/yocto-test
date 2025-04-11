@@ -105,7 +105,7 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 # Set working directory and copy application files with proper ownership
 WORKDIR /home/generic
 COPY --chown=generic:generic app.py /home/generic/app.py
-COPY --chown=generic:generic job_queue.py /home/generic/mirror.py
+COPY --chown=generic:generic job_queue.py /home/generic/job_queue.py
 COPY --chown=generic:generic templates /home/generic/templates
 COPY --chown=generic:generic static /home/generic/static
 
