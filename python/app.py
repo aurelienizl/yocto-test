@@ -17,11 +17,6 @@ def _shutdown_handler(signum, frame):
 signal.signal(signal.SIGINT,  _shutdown_handler)
 signal.signal(signal.SIGTERM, _shutdown_handler)
 
-@app.after_request
-def remove_date_header(response):
-    response.headers.pop('Date', None)
-    return response
-
 @app.route('/')
 def index():
     return render_template('index.html')
