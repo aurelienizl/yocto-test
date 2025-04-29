@@ -9,6 +9,8 @@ services:
       - internal
     expose:
       - "5000"
+    stop_signal: SIGTERM  # or SIGINT
+    stop_grace_period: 1h # 1 hour
 
   nginx:
     build:
