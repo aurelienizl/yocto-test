@@ -105,6 +105,8 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 WORKDIR /home/generic
 COPY --chown=generic:generic app.py /home/generic/app.py
 COPY --chown=generic:generic job_queue.py /home/generic/job_queue.py
+COPY --chown=generic:generic job.py /home/generic/job.py
+COPY --chown=generic:generic db /home/generic/db
 COPY --chown=generic:generic templates /home/generic/templates
 COPY --chown=generic:generic static /home/generic/static
 

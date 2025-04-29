@@ -106,24 +106,43 @@ $(document).ready(function() {
     });
   });
 
-  // Open log modal to display logs.
-  $('#tasksTable').on('click', '.log-btn', function() {
-    var taskId = $(this).data('id');
-    $('#logPre').text("Loading logs...");
-    $('#logModal').modal('show');
-    $.get('/logs/' + taskId)
-      .done(function(data) {
-        $('#logPre').text(data);
-      })
-      .fail(function(jqXHR, textStatus, errorThrown) {
-        console.log('Log fetch failed:', textStatus, errorThrown);
-        $('#logPre').text("No logs available or an error occurred while retrieving logs.");
-      });
-  });
+ // Keep a reference so we can close when the modal is hidden
+let logEventSource = null;
 
-  // Manual close action for modal.
-  $('#logModal .close, #logModal .btn-secondary').on('click', function() {
-    console.log('Close button clicked');
-    $('#logModal').modal('hide');
-  });
+$('#tasksTable').on('click', '.log-btn', function() {
+  const taskId = $(this).data('id');
+  const $pre = $('#logPre');
+  $pre.text('Connecting…');
+  $('#logModal').modal('show');
+
+  // Close any old connection
+  if (logEventSource) logEventSource.close();
+
+  // Open SSE stream
+  logEventSource = new EventSource(`/stream_logs/${taskId}`);
+
+  logEventSource.onopen = () => {
+    $pre.text('');  // clear the “Connecting…” message
+  };
+
+  logEventSource.onmessage = (e) => {
+    // Append each incoming line
+    $pre.append(e.data + '\n');
+    // Optional: auto-scroll to bottom
+    $pre[0].scrollTop = $pre[0].scrollHeight;
+  };
+
+  logEventSource.onerror = (err) => {
+    console.error('SSE error', err);
+    // You might choose to close on error:
+    // logEventSource.close();
+  };
 });
+
+// When the modal closes, shut down the EventSource
+$('#logModal').on('hidden.bs.modal', () => {
+  if (logEventSource) {
+    logEventSource.close();
+    logEventSource = null;
+  }
+})});
