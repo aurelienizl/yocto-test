@@ -10,7 +10,6 @@ import signal
 import logging
 import shutil
 import tempfile
-from logging.handlers import RotatingFileHandler
 
 class Job:
     STATUS_QUEUED   = 'queued'
@@ -29,31 +28,14 @@ class Job:
         self.process    = None
         self._stop_event= threading.Event()
 
-        # Persist the new task
         db.create_task(self.id, self.git_uri, self.created_at)
 
-        # Logger (still keeps file logs if desired)
-        BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-        LOGS_DIR = os.path.join(BASE_DIR, 'logs')
-        os.makedirs(LOGS_DIR, exist_ok=True)
-        self.log_file = os.path.join(LOGS_DIR, f'job-{self.id}.log')
-        self.logger = logging.getLogger(f'job-{self.id}')
-        self.logger.setLevel(logging.INFO)
-        fh = RotatingFileHandler(self.log_file, maxBytes=10*1024*1024,
-                                 backupCount=3)
-        fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-        self.logger.addHandler(fh)
-
-        # Temp clone dir
         self._temp_dir_obj = tempfile.TemporaryDirectory(prefix=f'repo-{self.id}-')
         self.clone_dir = self._temp_dir_obj.name
         self.timeout = 3600
 
     def _log(self, level, msg):
         ts = datetime.datetime.utcnow().isoformat()
-        # File log
-        self.logger.log(level, msg)
-        # DB An error occurred while enqueuing the task. error occurred while enqueuing the task.log
         db.add_log(self.id, ts, msg)
 
     def run_command(self, cmd, cwd=None, env=None):
@@ -95,7 +77,6 @@ class Job:
             self.process = None
 
     def run(self):
-        # Mark running
         self.status = Job.STATUS_RUNNING
         self.started_at = datetime.datetime.utcnow().isoformat()
         db.update_task_status(self.id, self.status, started_at=self.started_at)
@@ -113,7 +94,6 @@ class Job:
             else:
                 self._log(logging.INFO, 'No mirror.sh found, skipping')
 
-            # Finished successfully
             self.status = Job.STATUS_FINISHED
             self.finished_at = datetime.datetime.utcnow().isoformat()
             db.update_task_status(
