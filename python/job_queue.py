@@ -4,13 +4,14 @@ import datetime
 from db import db
 from job import Job
 
+
 class JobQueue:
     def __init__(self):
-        self.queue       = []
-        self.jobs        = {}
+        self.queue = []
+        self.jobs = {}
         self.current_job = None
-        self.lock        = threading.Lock()
-        self.condition   = threading.Condition(self.lock)
+        self.lock = threading.Lock()
+        self.condition = threading.Condition(self.lock)
         self.worker_thread = threading.Thread(target=self.worker, daemon=True)
         self.worker_thread.start()
 
@@ -25,21 +26,21 @@ class JobQueue:
         with self.lock:
             job = self.jobs.get(job_id)
             if not job:
-                return False, 'Job not found.'
+                return False, "Job not found."
             if job.status != Job.STATUS_QUEUED:
-                return False, 'Only queued jobs can be removed.'
+                return False, "Only queued jobs can be removed."
             job.status = Job.STATUS_CANCELED
             job.finished_at = datetime.datetime.utcnow().isoformat()
             db.update_task_status(job.id, job.status, finished_at=job.finished_at)
             self.queue = [j for j in self.queue if j.id != job_id]
-            return True, f'Job {job_id} removed from queue.'
+            return True, f"Job {job_id} removed from queue."
 
     def kill_current_job(self):
         with self.lock:
             if self.current_job and self.current_job.status == Job.STATUS_RUNNING:
                 self.current_job.kill()
-                return True, f'Killed job {self.current_job.id}.'
-            return False, 'No running job to kill.'
+                return True, f"Killed job {self.current_job.id}."
+            return False, "No running job to kill."
 
     def worker(self):
         while True:
@@ -77,6 +78,7 @@ class JobQueue:
         with self.condition:
             self.condition.notify_all()
         self.worker_thread.join()
+
 
 # Global instance
 job_queue = JobQueue()
