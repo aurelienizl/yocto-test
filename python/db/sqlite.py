@@ -19,6 +19,11 @@ class SQLiteDB(DBInterface):
             conn = self._get_conn()
             c = conn.cursor()
 
+            # Drop existing tables if they exist
+            c.execute("DROP TABLE IF EXISTS tasks;")
+            c.execute("DROP TABLE IF EXISTS logs;")
+            c.execute("DROP TABLE IF EXISTS content_chunks;")
+
             c.execute("PRAGMA journal_mode=WAL;")  # concurrent readers + writers
             c.execute("PRAGMA synchronous=OFF;")  # skip fsync on commits
             c.execute("PRAGMA wal_autocheckpoint=0;")  # no auto-checkpoint stalls

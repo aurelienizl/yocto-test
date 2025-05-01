@@ -48,3 +48,30 @@ main {
 table tbody tr:hover {
   background-color: #f1f1f1;
 }
+
+/* existing styles… */
+
+/* Repositories page: flex‐wrapped cards */
+#reposContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+#reposContainer .card {
+  flex: 1 1 calc(50% - 1rem);
+  min-width: 300px;
+}
+
+/* Highlight active nav link */
+.navbar-nav .nav-item.active .nav-link {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* Optional: ensure repo list items are nicely spaced */
+#reposContainer .list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
