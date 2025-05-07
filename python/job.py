@@ -94,11 +94,11 @@ class Job:
             shutil.rmtree(self.clone_dir, ignore_errors=True)
             self.run_command(["git", "clone", self.git_uri, self.clone_dir], env=env)
 
-            script = os.path.join(self.clone_dir, ".config", "mirror.sh")
+            script = os.path.join(self.clone_dir, ".config", "pipeline.sh")
             if os.path.isfile(script):
                 self.run_command(["bash", script], cwd=self.clone_dir, env=env)
             else:
-                self._log(logging.INFO, "No mirror.sh found, skipping")
+                self._log(logging.INFO, "No pipeline.sh found, skipping")
 
             self.status = Job.STATUS_FINISHED
             self.finished_at = datetime.datetime.utcnow().isoformat()
