@@ -77,6 +77,7 @@ RUN dpkg --add-architecture i386 && \
         python3-pip && \
     # Install Flask via pip (pin version as needed)
     pip3 install --no-cache-dir flask && \
+    pip3 install --no-cache-dir psutil && \
     rm -rf /var/lib/apt/lists/* && \
     echo "dash dash/sh boolean false" | debconf-set-selections && \
     dpkg-reconfigure dash
@@ -107,6 +108,7 @@ COPY --chown=generic:generic app.py /home/generic/app.py
 COPY --chown=generic:generic job_queue.py /home/generic/job_queue.py
 COPY --chown=generic:generic job.py /home/generic/job.py
 COPY --chown=generic:generic db /home/generic/db
+COPY --chown=generic:generic endpoints /home/generic/endpoints
 COPY --chown=generic:generic templates /home/generic/templates
 COPY --chown=generic:generic static /home/generic/static
 
