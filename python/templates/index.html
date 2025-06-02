@@ -1,39 +1,27 @@
+<!-- buildos_web/templates/index.html (dashboard) -->
 {% extends 'base.html' %}
-
 {% block content %}
-  <!-- Task Submission Form -->
-  <div class="card mb-4">
-    <div class="card-header">Enqueue New Task</div>
-    <div class="card-body">
-      <form id="taskForm">
-        <div class="form-group">
-          <label for="gitUri">Git Repository URI</label>
-          <input type="url" class="form-control" id="gitUri"
-                 placeholder="Enter Git URI" required>
-        </div>
-        <button type="submit" class="btn btn-success">Enqueue Task</button>
-      </form>
+  <h2 class="mb-3">Task Queue</h2>
+
+  <!-- Tasks Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0" id="tasksTable">
+          <thead class="thead-light">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Repository</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created</th>
+              <th scope="col" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody><!-- dynamic rows via app.js --></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- Tasks List -->
-  <div class="card">
-    <div class="card-header">Tasks Queue</div>
-    <div class="card-body">
-      <table class="table table-striped" id="tasksTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Git URI</th>
-            <th>Status</th>
-            <th>Created At</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Populated by app.js -->
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <p class="text-muted mt-3 small">Launch new pipelines from the <a href="{{ url_for('repos') }}">Repositories</a> page.</p>
 {% endblock %}

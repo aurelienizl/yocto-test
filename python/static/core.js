@@ -1,20 +1,38 @@
-// Centralized API endpoints
+// buildos_web/static/core.js
+//--------------------------------------------------------
+//  Compute base-path once from <body data-base="…">
+//--------------------------------------------------------
+const BASE = document.body.dataset.base || '';
+
+function api(path) {
+  // join BASE + /path, collapse duplicate slashes
+  return `${BASE}/${path}`.replace(/\/+/g, '/').replace(/\/\?/, '?');
+}
+
+//--------------------------------------------------------
+//  Centralised API map  (EVERY entry via api())
+//--------------------------------------------------------
 const API = {
-  tasks:    '/tasks',
-  current:  '/current',
-  enqueue:  '/enqueue',
-  kill:     '/kill',
-  remove:   '/remove',
-  logsJson: (id, after_id=0) => `/logs_json/${id}?after_id=${after_id}`,
-  download: id => `/tasks/${id}/download`,
+  // list tasks for all repos or a single repo_id
+  tasks:        repoId => api(repoId ? `tasks?repo_id=${repoId}` : 'tasks'),
+
+  repositories: api('repositories'),
+  current:      api('current'),
+  enqueue:      api('enqueue'),
+  kill:         api('kill'),
+  remove:       api('remove'),
+  logsJson:     (id, afterId = 0) => api(`logs_json/${id}?after_id=${afterId}`),
+  download:     id => api(`tasks/${id}/download`),
   metrics: {
-    cpu:    '/metrics/cpu',
-    memory: '/metrics/memory',
-    disk:   '/metrics/disk'
+    cpu:    api('metrics/cpu'),
+    memory: api('metrics/memory'),
+    disk:   api('metrics/disk')
   }
 };
 
-// Status badge helper
+//--------------------------------------------------------
+//  UI helpers
+//--------------------------------------------------------
 function getBadgeClass(status) {
   switch (status) {
     case 'queued':   return 'badge-secondary';
@@ -26,45 +44,41 @@ function getBadgeClass(status) {
   }
 }
 
-// Update job status widget
+//--------------------------------------------------------
+//  Live system status widgets
+//--------------------------------------------------------
 function updateCurrentStatus() {
   $.getJSON(API.current, data => {
-    $('#currentStatus').text(
-      data.id ? `Running (${data.git_uri})` : 'Idle'
-    );
-  }).fail(() => {
-    $('#currentStatus').text('Unknown');
-  });
+    if (data && data.id) {
+      const label = data.git_uri || data.repo_id || data.id;
+      $('#currentStatus').text(`Running (${label})`);
+    } else {
+      $('#currentStatus').text('Idle');
+    }
+  }).fail(() => $('#currentStatus').text('Unknown'));
 }
 
-// Poll and display system metrics
 function loadMetrics() {
-  $.getJSON(API.metrics.cpu, data => {
-    $('#cpuUsage').text(data.cpu_percent.toFixed(1) + '%');
-  });
-  $.getJSON(API.metrics.memory, data => {
-    $('#memUsage').text(data.percent.toFixed(1) + '%');
-  });
-  $.getJSON(API.metrics.disk, data => {
-    $('#diskUsage').text(data.percent.toFixed(1) + '%');
-  });
+  $.getJSON(API.metrics.cpu,    d => $('#cpuUsage').text(d.cpu_percent.toFixed(0) + '%'));
+  $.getJSON(API.metrics.memory, d => $('#memUsage').text(d.percent.toFixed(0) + '%'));
+  $.getJSON(API.metrics.disk,   d => $('#diskUsage').text(d.percent.toFixed(0) + '%'));
 }
 
-// Shared log‐polling
+//--------------------------------------------------------
+//  Shared log polling
+//--------------------------------------------------------
 let logPollInterval = null;
 let lastLogId = 0;
 
 function startLogPolling(taskId) {
-  const $pre = $('#logPre');
+  stopLogPolling();
   lastLogId = 0;
-  $pre.text('Loading logs…');
+  const $pre = $('#logPre').text('Loading logs…');
   $('#logModal').modal('show');
 
   logPollInterval = setInterval(() => {
     $.getJSON(API.logsJson(taskId, lastLogId), rows => {
-      if (rows.length && $pre.text().startsWith('Loading')) {
-        $pre.text('');
-      }
+      if (rows.length && $pre.text().startsWith('Loading')) $pre.text('');
       rows.forEach(r => {
         $pre.append(`[${r.timestamp}] ${r.line}\n`);
         lastLogId = r.id;
@@ -81,13 +95,15 @@ function stopLogPolling() {
   }
 }
 
-// Initialize shared bits
-$(document).ready(function() {
+//--------------------------------------------------------
+//  Global bootstrap
+//--------------------------------------------------------
+$(document).ready(() => {
+  $('#logModal').on('hidden.bs.modal', stopLogPolling);
+
   updateCurrentStatus();
   setInterval(updateCurrentStatus, 2000);
 
   loadMetrics();
   setInterval(loadMetrics, 5000);
-
-  $('#logModal').on('hidden.bs.modal', stopLogPolling);
 });
