@@ -1,7 +1,6 @@
 *.pyc
 *.pyo
 /*.patch
-build*/
 pyshtables.py
 pstage/
 scripts/oe-git-proxy-socks
@@ -23,4 +22,4 @@ bitbake/doc/manual/xhtml/
 pull-*/
 logs
 .venv
-sqlite
+sqlite.db
