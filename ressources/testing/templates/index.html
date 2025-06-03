@@ -5,26 +5,45 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>File Manager</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Tailwind 3 “Play CDN” (no MIME-type issue) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Alpine.js v3 -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Your own JS helpers (optional) -->
   <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js"></script>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-100">
 
-  <div x-data="fileManager()" x-init="init()"
-       @click.window="hideMenu()"
-       @dragover.window.prevent="onDragOver"
-       @drop.window.prevent="onDrop"
-       class="flex-1 flex flex-col relative">
+  <div
+    x-data="fileManager()"
+    x-init="init()"
+    @click.window="hideMenu()"
+    @dragover.window.prevent="onDragOver"
+    @drop.window.prevent="onDrop"
+    class="flex-1 flex flex-col relative"
+  >
 
     <!-- Navbar -->
-    <nav class="bg-blue-600 text-white p-4 flex items-center">
+    <nav class="bg-blue-600 text-white p-4 flex items-center space-x-2">
       <button @click="back" :disabled="!history.length"
-              class="mr-2 disabled:opacity-50">←</button>
+              class="disabled:opacity-50">←</button>
       <button @click="forward" :disabled="!future.length"
               class="mr-4 disabled:opacity-50">→</button>
-      <h1 class="font-bold text-lg">File Manager</h1>
+
+      <!-- Simple breadcrumb -->
+      <template x-for="(seg,idx) in path.split('/').filter(Boolean)" :key="idx">
+        <span class="flex items-center">
+          <span>/</span>
+          <button class="underline"
+                  @click="jump(idx)"
+                  x-text="seg"></button>
+        </span>
+      </template>
+
       <div class="ml-auto flex space-x-2 items-center">
         <button @click="createFolder()"
                 class="px-3 py-1 bg-indigo-500 rounded hover:bg-indigo-600">
@@ -32,30 +51,29 @@
         </button>
         <button @click="$refs.file.click()"
                 class="px-3 py-1 bg-green-500 rounded hover:bg-green-600">
-          Upload File
-        </button>
-        <button @click="pasteItem()"
-                :disabled="!clipboard"
-                :class="clipboard
-                  ? 'px-3 py-1 bg-purple-500 rounded hover:bg-purple-600 text-white'
-                  : 'px-3 py-1 bg-gray-400 rounded text-white cursor-not-allowed'"
-        >
-          Paste
+          Upload
         </button>
         <input type="file" class="hidden" x-ref="file"
                @change="uploadFile($event.target.files[0])" />
       </div>
     </nav>
 
-    <!-- File grid -->
-    <main class="flex-1 p-4">
+    <!-- Main area (relative so the overlay can sit on top) -->
+    <main class="relative flex-1 p-4" @contextmenu.prevent.stop="showMenu($event, null)">
+      <!-- Overlay when directory is blocked -->
+      <template x-if="blocked">
+        <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur z-20">
+          <div class="text-6xl">🔒</div>
+          <p class="mt-4 text-xl font-semibold">Access denied</p>
+        </div>
+      </template>
+
+      <!-- File grid -->
       <ul role="list"
           class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <template x-for="it in items" :key="it.name">
           <li tabindex="0"
-              @dblclick="it.is_dir
-                         ? navigate(it.relativePath)
-                         : download(it)"
+              @dblclick="it.is_dir ? navigate(it.relativePath) : download(it)"
               @contextmenu.prevent.stop="showMenu($event, it)"
               class="bg-white p-4 rounded-lg shadow hover:shadow-md flex flex-col cursor-pointer select-none"
           >
@@ -88,37 +106,52 @@
       x-transition.opacity
     >
       <ul>
-        <template x-if="contextMenu.item && contextMenu.item.is_dir">
+        <!-- For folders -->
+        <template x-if="contextMenu.item?.is_dir">
           <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               @click="navigate(contextMenu.item.relativePath); hideMenu()">
             Open
           </li>
         </template>
+
+        <!-- For files -->
         <template x-if="contextMenu.item && !contextMenu.item.is_dir">
           <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               @click="download(contextMenu.item); hideMenu()">
             Download
           </li>
         </template>
-        <!-- Copy entry -->
+
+        <!-- Copy -->
         <template x-if="contextMenu.item">
           <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               @click="copyItem(contextMenu.item); hideMenu()">
             Copy
           </li>
         </template>
-        <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            @click="renameItem(contextMenu.item); hideMenu()">
-          Rename
+
+        <!-- Paste (enabled only if clipboard) -->
+        <li class="px-4 py-2"
+            :class="clipboard ? 'hover:bg-gray-100 cursor-pointer' : 'text-gray-400 cursor-not-allowed'"
+            @click="clipboard && (pasteItem(), hideMenu())">
+          Paste
         </li>
-        <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            @click="moveItem(contextMenu.item); hideMenu()">
-          Move
-        </li>
-        <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
-            @click="deleteItem(contextMenu.item); hideMenu()">
-          Delete
-        </li>
+
+        <!-- Rename -->
+        <template x-if="contextMenu.item">
+          <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              @click="renameItem(contextMenu.item); hideMenu()">
+            Rename
+          </li>
+        </template>
+
+        <!-- Delete -->
+        <template x-if="contextMenu.item">
+          <li class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"
+              @click="deleteItem(contextMenu.item); hideMenu()">
+            Delete
+          </li>
+        </template>
       </ul>
     </div>
 
@@ -141,6 +174,246 @@
   <footer class="bg-gray-800 text-gray-300 p-4 text-center">
     © 2025 File Manager
   </footer>
-</body>
 
+  <!-- Alpine component -->
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('fileManager', () => ({
+
+        /* ── State ── */
+        path    : '',
+        items   : [],
+        history : [],
+        future  : [],
+        toasts  : [],
+        clipboard : null,
+        contextMenu : { visible:false, x:0, y:0, item:null },
+
+        /* new flags */
+        blocked   : false,   // current directory not readable
+        lastError : '',      // last error message shown
+        pollId    : null,    // interval id
+
+        /* ── Lifecycle ── */
+        init() {
+          this.load(true);
+          this.startPoll();
+        },
+        startPoll() {
+          if (this.pollId) return;
+          this.pollId = setInterval(() => this.load(false), 2000);
+        },
+        stopPoll() {
+          if (this.pollId) {
+            clearInterval(this.pollId);
+            this.pollId = null;
+          }
+        },
+
+        /* ── Toast helpers ─ */
+        toast(msg, type='info') {
+          if (msg === this.lastError) return;     // de-dup exact repeats
+          const id = Date.now() + Math.random();
+          this.toasts.push({ id, msg, type });
+          if (type === 'error') this.lastError = msg;
+          setTimeout(() => {
+            this.toasts = this.toasts.filter(t => t.id !== id);
+          }, 4000);
+        },
+        removeToast(id) {
+          this.toasts = this.toasts.filter(t => t.id !== id);
+        },
+
+        /* ── Fetch helper ─ */
+        async fetchJSON(url, opts = {}) {
+          const ctl = new AbortController();
+          opts.signal = ctl.signal;
+          try {
+            const resp = await Promise.race([
+              fetch(url, opts),
+              new Promise((_, rj) => setTimeout(() => (ctl.abort(), rj(new Error('timeout'))), 5000))
+            ]);
+
+            let data;
+            try { data = await resp.json(); }
+            catch {
+              data = { status:'error', message: resp.statusText || `HTTP ${resp.status}` };
+            }
+            return data;
+          } catch (e) {
+            return { status:'error', message: e.message || 'Network error' };
+          }
+        },
+
+        /* ── Load directory ─ */
+        async load(showToast=false) {
+          if (this.blocked) return;           // don’t hammer a blocked dir
+          const r = await this.fetchJSON(`/api/list?path=${encodeURIComponent(this.path)}`);
+          if (r.status === 'success') {
+            this.items = r.data.map(it => ({
+              ...it,
+              relativePath: this.path ? `${this.path}/${it.name}` : it.name
+            }));
+            /* clear error state */
+            if (this.blocked) { this.blocked=false; this.startPoll(); }
+            this.lastError = '';
+          } else {
+            if (showToast) this.toast(r.message, 'error');
+            this.blocked = true;
+            this.stopPoll();
+          }
+        },
+
+        /* ── Navigation ─ */
+        navigate(p) {
+          this.history.push(this.path);
+          this.future = [];
+          this.path = p;
+          this.blocked = false;
+          this.lastError = '';
+          this.load(true);
+          this.startPoll();
+          this.hideMenu();
+        },
+        back() {
+          if (!this.history.length) return;
+          this.future.push(this.path);
+          this.path = this.history.pop();
+          this.blocked = false;
+          this.lastError = '';
+          this.load(true);
+          this.startPoll();
+        },
+        forward() {
+          if (!this.future.length) return;
+          this.history.push(this.path);
+          this.path = this.future.pop();
+          this.blocked = false;
+          this.lastError = '';
+          this.load(true);
+          this.startPoll();
+        },
+        jump(idx) {               // breadcrumb click
+          const segs = this.path.split('/').filter(Boolean);
+          this.navigate(segs.slice(0, idx+1).join('/'));
+        },
+
+        /* ── CRUD helpers ─ */
+        guardBlocked() {
+          if (this.blocked) {
+            this.toast('Folder is not accessible', 'error');
+            return true;
+          }
+          return false;
+        },
+        createFolder() {
+          if (this.guardBlocked()) return;
+          const n = prompt('New folder name:');
+          if (!n) return;
+          this.fetchJSON('/api/create-folder', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ path:this.path, name:n })
+          }).then(r => r.status==='success'
+            ? (this.toast(r.message,'success'), this.load())
+            : this.toast(r.message,'error')
+          );
+        },
+        deleteItem(it) {
+          if (this.guardBlocked() || !confirm(`Delete "${it.name}"?`)) return;
+          this.fetchJSON('/api/delete',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ path:this.path, name:it.name })
+          }).then(r => r.status==='success'
+            ? (this.toast(r.message,'success'), this.load())
+            : this.toast(r.message,'error')
+          );
+        },
+        renameItem(it) {
+          if (this.guardBlocked()) return;
+          const nn = prompt('Rename to:', it.name);
+          if (!nn || nn === it.name) return;
+          this.fetchJSON('/api/rename',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ path:this.path, old:it.name, new:nn })
+          }).then(r => r.status==='success'
+            ? (this.toast(r.message,'success'), this.load())
+            : this.toast(r.message,'error')
+          );
+        },
+        download(it) {
+          window.location = `/api/download?path=${encodeURIComponent(this.path)}&name=${encodeURIComponent(it.name)}`;
+        },
+
+        /* ── Copy & Paste ─ */
+        copyItem(it) {
+          this.clipboard = it;
+          this.toast(`Copied "${it.name}"`, 'info');
+        },
+        pasteItem() {
+          if (!this.clipboard) {
+            this.toast('Nothing to paste', 'error');
+            return;
+          }
+          if (this.guardBlocked()) return;
+
+          const srcDir = this.clipboard.relativePath.split('/').slice(0,-1).join('/');
+          this.fetchJSON('/api/copy',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              path  : srcDir,
+              name  : this.clipboard.name,
+              target: this.path
+            })
+          }).then(r => r.status==='success'
+            ? (this.toast(r.message,'success'), this.load())
+            : this.toast(r.message,'error')
+          );
+          this.clipboard = null;
+        },
+
+        /* ── Context Menu helpers ─ */
+        showMenu(evt, it=null) {
+          this.contextMenu = { visible:true, x:evt.clientX, y:evt.clientY, item:it };
+        },
+        hideMenu() {
+          this.contextMenu.visible = false;
+          this.contextMenu.item = null;
+        },
+
+        /* ── Drag & Drop Upload ─ */
+        onDragOver(e){ e.dataTransfer.dropEffect='copy'; },
+        onDrop(e){ if (this.guardBlocked()) return; [...e.dataTransfer.files].forEach(f=>this.uploadFile(f)); },
+        uploadFile(file) {
+          if (this.guardBlocked()) return;
+          const id = Date.now()+'-'+file.name;
+          this.toasts.push({ id, msg:`Uploading ${file.name}…`, type:'info' });
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST','/api/upload');
+          xhr.onload = () => {
+            this.removeToast(id);
+            try {
+              const r = JSON.parse(xhr.responseText);
+              this.toast(r.message, r.status==='success' ? 'success' : 'error');
+              if (r.status==='success') this.load();
+            } catch { this.toast('Upload failed','error'); }
+          };
+          xhr.onerror = () => { this.removeToast(id); this.toast('Upload error','error'); };
+          const fd = new FormData();
+          fd.append('path', this.path);
+          fd.append('file', file);
+          xhr.send(fd);
+        },
+
+        /* ── Formatters ─ */
+        fmtSize(b){ return (b/1024).toFixed(2)+' KB'; },
+        fmtTime(ts){ return new Date(ts*1000).toLocaleString(); }
+
+      }));
+    });
+  </script>
+</body>
 </html>

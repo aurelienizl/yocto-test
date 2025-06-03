@@ -20,7 +20,7 @@ def create_app():
     # Base directory from env or ./files
     base_dir = os.environ.get(
         'FOLDER_SERVE',
-        os.path.join(os.getcwd(), '/')
+        os.path.join(os.getcwd(), '/home')
     )
     os.makedirs(base_dir, exist_ok=True)
 
