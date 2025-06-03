@@ -12,8 +12,6 @@
   <!-- Alpine.js v3 -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-  <!-- Your own JS helpers (optional) -->
-  <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 
 <body class="flex flex-col min-h-screen bg-gray-100">
@@ -248,7 +246,7 @@
         /* ── Load directory ─ */
         async load(showToast=false) {
           if (this.blocked) return;           // don’t hammer a blocked dir
-          const r = await this.fetchJSON(`/api/list?path=${encodeURIComponent(this.path)}`);
+          const r = await this.fetchJSON(`/mirror/list?path=${encodeURIComponent(this.path)}`);
           if (r.status === 'success') {
             this.items = r.data.map(it => ({
               ...it,
@@ -310,7 +308,7 @@
           if (this.guardBlocked()) return;
           const n = prompt('New folder name:');
           if (!n) return;
-          this.fetchJSON('/api/create-folder', {
+          this.fetchJSON('/mirror/create-folder', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ path:this.path, name:n })
@@ -321,7 +319,7 @@
         },
         deleteItem(it) {
           if (this.guardBlocked() || !confirm(`Delete "${it.name}"?`)) return;
-          this.fetchJSON('/api/delete',{
+          this.fetchJSON('/mirror/delete',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ path:this.path, name:it.name })
@@ -334,7 +332,7 @@
           if (this.guardBlocked()) return;
           const nn = prompt('Rename to:', it.name);
           if (!nn || nn === it.name) return;
-          this.fetchJSON('/api/rename',{
+          this.fetchJSON('/mirror/rename',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ path:this.path, old:it.name, new:nn })
@@ -344,7 +342,7 @@
           );
         },
         download(it) {
-          window.location = `/api/download?path=${encodeURIComponent(this.path)}&name=${encodeURIComponent(it.name)}`;
+          window.location = `/mirror/download?path=${encodeURIComponent(this.path)}&name=${encodeURIComponent(it.name)}`;
         },
 
         /* ── Copy & Paste ─ */
@@ -360,7 +358,7 @@
           if (this.guardBlocked()) return;
 
           const srcDir = this.clipboard.relativePath.split('/').slice(0,-1).join('/');
-          this.fetchJSON('/api/copy',{
+          this.fetchJSON('/mirror/copy',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({
@@ -392,7 +390,7 @@
           const id = Date.now()+'-'+file.name;
           this.toasts.push({ id, msg:`Uploading ${file.name}…`, type:'info' });
           const xhr = new XMLHttpRequest();
-          xhr.open('POST','/api/upload');
+          xhr.open('POST','/mirror/upload');
           xhr.onload = () => {
             this.removeToast(id);
             try {

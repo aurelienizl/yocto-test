@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 import shutil
 
 def create_endpoints(app, base_dir):
-    bp = Blueprint('api', __name__, url_prefix='/api')
+    bp = Blueprint('mirror', __name__, url_prefix='/mirror')
 
     def success(data=None, message='Success'):
         return jsonify({'status': 'success', 'message': message, 'data': data})

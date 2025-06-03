@@ -95,8 +95,7 @@ class SQLiteDB(DBInterface):
             # seed repositories from env
             for uri in [u.strip() for u in os.getenv("SERVE", "").split(",") if u.strip()]:
                 repo_id = str(uuid.uuid4())
-                name_parts = uri.rstrip(".git").split("/")[-2:]
-                display_name = "/".join(name_parts)
+                display_name = uri
                 cur.execute(
                     "INSERT INTO repositories (id, git_uri, name, created_at) "
                     "VALUES (?, ?, ?, ?)",

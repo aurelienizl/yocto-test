@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pipeline • BuildOS</title>
+  <base href="/">
+  <link rel="stylesheet" href="{{ url_for('static', filename='pipeline.css') }}">
+  <script type="module" defer src="{{ url_for('static', filename='pipeline.js') }}"></script>
+</head>
+
+<body data-base="/pipeline">
+  <header>
+    <h1>Pipeline</h1>
+    <nav id="nav"></nav>
+  </header>
+
+  <!-- small live widgets -->
+  <section class="widgets">
+    <span class="metric">CPU <strong id="cpuUsage">—</strong></span>
+    <span class="metric">MEM <strong id="memUsage">—</strong></span>
+    <span class="metric">DISK <strong id="diskUsage">—</strong></span>
+    <span id="currentStatus" class="status">Loading…</span>
+  </section>
+
+  <main id="reposContainer" class="repo-grid"></main>
+
+  <!-- modal log viewer -->
+  <dialog id="logDlg">
+    <button id="closeLogBtn" class="close-btn">✕</button>
+    <pre id="logPre">Loading…</pre>
+  </dialog>
+
+  <footer>© 2025 BuildOS</footer>
+</body>
+</html>
