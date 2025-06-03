@@ -15,12 +15,8 @@ from typing import Optional
 
 from buildos_db import db
 
-__all__ = ["Job", "JobQueue", "job_queue"]
-
-
 class JobCancelled(Exception):
     """Raised internally when a job is cancelled by the user."""
-
 
 class Job:
     STATUS_QUEUED = "queued"
@@ -53,7 +49,6 @@ class Job:
         self.clone_dir = _Path(self._tmpdir.name)
         self.home_dir = self.clone_dir / "_home"; self.home_dir.mkdir(exist_ok=True)
 
-    # ---------------- logging & helpers ----------------
     def _log(self, lvl, msg):
         db.add_log(self.id, _dt.datetime.utcnow().isoformat(), str(msg))
         _log.log(lvl, str(msg))

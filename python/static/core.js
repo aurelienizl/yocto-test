@@ -1,4 +1,3 @@
-// buildos_web/static/core.js
 //--------------------------------------------------------
 //  Compute base-path once from <body data-base="…">
 //--------------------------------------------------------
@@ -10,12 +9,11 @@ function api(path) {
 }
 
 //--------------------------------------------------------
-//  Centralised API map  (EVERY entry via api())
+//  Centralized API map  (EVERY entry via api())
 //--------------------------------------------------------
 const API = {
   // list tasks for all repos or a single repo_id
   tasks:        repoId => api(repoId ? `tasks?repo_id=${repoId}` : 'tasks'),
-
   repositories: api('repositories'),
   current:      api('current'),
   enqueue:      api('enqueue'),
@@ -55,7 +53,9 @@ function updateCurrentStatus() {
     } else {
       $('#currentStatus').text('Idle');
     }
-  }).fail(() => $('#currentStatus').text('Unknown'));
+  }).fail(() => {
+    $('#currentStatus').text('Unknown');
+  });
 }
 
 function loadMetrics() {
@@ -73,17 +73,19 @@ let lastLogId = 0;
 function startLogPolling(taskId) {
   stopLogPolling();
   lastLogId = 0;
-  const $pre = $('#logPre').text('Loading logs…');
+  $('#logPre').text('Loading logs…');
   $('#logModal').modal('show');
 
   logPollInterval = setInterval(() => {
     $.getJSON(API.logsJson(taskId, lastLogId), rows => {
-      if (rows.length && $pre.text().startsWith('Loading')) $pre.text('');
+      if (rows.length && $('#logPre').text().startsWith('Loading')) {
+        $('#logPre').text('');
+      }
       rows.forEach(r => {
-        $pre.append(`[${r.timestamp}] ${r.line}\n`);
+        $('#logPre').append(`[${r.timestamp}] ${r.line}\n`);
         lastLogId = r.id;
       });
-      $pre[0].scrollTop = $pre[0].scrollHeight;
+      $('#logPre')[0].scrollTop = $('#logPre')[0].scrollHeight;
     });
   }, 1000);
 }

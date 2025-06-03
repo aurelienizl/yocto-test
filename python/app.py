@@ -34,7 +34,6 @@ def create_app() -> Flask:
 
     # graceful shutdown
     def _shutdown_handler(signum, _frame):
-        sys.exit(0)
         print(
             f"[{datetime.datetime.utcnow().isoformat()}] Shutdown signal {signum}",
             file=sys.stderr,

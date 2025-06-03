@@ -7,11 +7,11 @@ from __future__ import annotations
 import datetime
 import threading
 from typing import Dict, List, Optional
+import datetime as _dt
+
 
 from buildos_db import db
 from .job import Job
-
-__all__ = ["JobQueue", "job_queue"]
 
 class JobQueue:
     def __init__(self):
@@ -27,7 +27,7 @@ class JobQueue:
     def enqueue(self, repo_id: str, *, timeout:int=3600) -> Job:
         job = Job(repo_id, timeout)
         with self._cond:
-            self._jobs[job.id] = job  # ⇐ put *before* notify
+            self._jobs[job.id] = job 
             self._queue.append(job)
             self._cond.notify()
         return job
@@ -52,9 +52,15 @@ class JobQueue:
         with self._lock:
             for j in self._queue:
                 j.status = Job.STATUS_CANCELED
-                ts=_dt.datetime.utcnow().isoformat(); db.update_task_status(j.id, j.status, finished_at=ts)
-            self._queue.clear(); self._queue.append(None)  # sentinel
-        with self._cond: self._cond.notify_all(); self._worker.join()
+                ts = _dt.datetime.utcnow().isoformat()
+                db.update_task_status(j.id, j.status, finished_at=ts)
+            self._queue.clear()
+            self._queue.append(None)
+
+        with self._cond:
+            self._cond.notify_all()
+
+        self._worker.join()
 
     # ------------ worker ------------
     def _loop(self):

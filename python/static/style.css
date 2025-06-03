@@ -49,8 +49,6 @@ table tbody tr:hover {
   background-color: #f1f1f1;
 }
 
-/* existing styles… */
-
 /* Repositories page: flex‐wrapped cards */
 #reposContainer {
   display: flex;
@@ -74,4 +72,9 @@ table tbody tr:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* Button spacing fixes */
+.btn-sm {
+  margin-right: 0.25rem;
 }

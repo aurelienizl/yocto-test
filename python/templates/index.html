@@ -1,7 +1,6 @@
-<!-- buildos_web/templates/index.html (dashboard) -->
 {% extends 'base.html' %}
 {% block content %}
-  <h2 class="mb-3">Task Queue</h2>
+  <h2 class="mb-3">Task Queue</h2>
 
   <!-- Tasks Table -->
   <div class="card shadow-sm">
@@ -17,11 +16,13 @@
               <th scope="col" class="text-center">Actions</th>
             </tr>
           </thead>
-          <tbody><!-- dynamic rows via app.js --></tbody>
+          <tbody><!-- dynamic rows injected by app.js --></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <p class="text-muted mt-3 small">Launch new pipelines from the <a href="{{ url_for('repos') }}">Repositories</a> page.</p>
+  <p class="text-muted mt-3 small">
+    Launch new pipelines from the <a href="{{ url_for('repos') }}">Repositories</a> page.
+  </p>
 {% endblock %}
