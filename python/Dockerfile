@@ -91,9 +91,9 @@ RUN curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o /usr/lo
 #################################################################
 # Create a non-root user and group with UID/GID 1000
 RUN groupadd --gid 1000 generic && \
-    useradd --uid 1000 --gid generic --create-home generic && \
-    usermod -aG sudo generic && \
-    echo "generic:generic" | chpasswd
+    useradd --uid 1000 --gid generic --create-home generic 
+#    usermod -aG sudo generic && \
+#    echo "generic:generic" | chpasswd
 
 # Generate locale settings
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
