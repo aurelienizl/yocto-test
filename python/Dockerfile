@@ -27,8 +27,6 @@ RUN dpkg --add-architecture i386 && \
         nano \
         vim \
         python3-yaml \
-        tmux \
-        screen \
         libncursesw5 \
         libncursesw5:i386 \
         python-is-python3 \
@@ -75,14 +73,13 @@ RUN dpkg --add-architecture i386 && \
         zip \
         nginx \
         python3-pip && \
-    # Install Flask via pip (pin version as needed)
-    pip3 install --no-cache-dir flask && \
-    pip3 install --no-cache-dir psutil && \
+    pip3 install --no-cache-dir flask==3.1.1 && \
+    pip3 install --no-cache-dir psutil==7.0.0 && \
+    pip3 install --no-cache-dir hypercorn==0.17.3 && \
     rm -rf /var/lib/apt/lists/* && \
     echo "dash dash/sh boolean false" | debconf-set-selections && \
     dpkg-reconfigure dash
 
-# Install the repo tool into /usr/local/bin and enforce Python3
 RUN curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo && \
     chmod a+x /usr/local/bin/repo && \
     sed -i "1s/python/python3/" /usr/local/bin/repo
@@ -126,5 +123,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
     CMD curl --fail http://localhost:5000/ || exit 1
 
 # Use exec form to run the Flask app
-ENTRYPOINT ["python"]
-CMD ["app.py"]
+ENTRYPOINT ["hypercorn"]
+CMD ["app:create_app()", "--bind", "0.0.0.0:5000"]

@@ -61,7 +61,7 @@ def create_app() -> Flask:
             f"[{datetime.datetime.utcnow().isoformat()}] Shutdown signal {signum}",
             file=sys.stderr,
         )
-        job_queue.shutdown()  # stop any running worker cleanly
+        job_queue.shutdown()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, _shutdown)
@@ -70,8 +70,7 @@ def create_app() -> Flask:
     return app
 
 
-# ── Dev entry-point (use gunicorn / uvicorn / waitress in production) ──
 if __name__ == "__main__":
     app = create_app()
-    # threaded=True lets log polling + uploads run concurrently on dev server
     app.run(host="0.0.0.0", port=5000, threaded=True)
+
