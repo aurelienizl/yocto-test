@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Mirror Manager • BuildOS</title>
@@ -7,15 +8,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
   <!-- global look + app-specific tweaks -->
-  <link rel="stylesheet"
-        href="{{ url_for('static', filename='index.css') }}">
-  <link rel="stylesheet"
-        href="{{ url_for('static', filename='mirror.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mirror.css') }}">
 
   <!-- logic -->
-  <script type="module"
-          defer
-          src="{{ url_for('static', filename='mirror.js') }}"></script>
+  <script type="module" defer src="{{ url_for('static', filename='mirror.js') }}"></script>
 </head>
 
 <body data-base="/mirror">
@@ -26,14 +23,14 @@
 
   <!-- toolbar ---------------------------------------------------->
   <section class="bar">
-    <button id="backBtn"   title="Back">←</button>
-    <button id="fwdBtn"    title="Forward">→</button>
-    <button id="upBtn"     title="Up one level">⬆︎</button>
+    <button id="backBtn" title="Back">←</button>
+    <button id="fwdBtn" title="Forward">→</button>
+    <button id="upBtn" title="Up one level">⬆︎</button>
 
     <span id="crumbs" class="crumbs"></span>
 
     <button id="newBtn">＋ Folder</button>
-    <input  id="fileInput" type="file" multiple hidden>
+    <input id="fileInput" type="file" multiple hidden>
     <button id="uploadBtn">↑ Upload</button>
   </section>
 
@@ -41,7 +38,12 @@
   <main>
     <table id="list">
       <thead>
-        <tr><th>Name</th><th>Size</th><th>Modified</th><th></th></tr>
+        <tr>
+          <th>Name</th>
+          <th>Size</th>
+          <th>Modified</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -55,4 +57,5 @@
 
   <footer>© 2025 BuildOS</footer>
 </body>
+
 </html>

@@ -82,7 +82,7 @@ class Job:
                 line = self.process.stdout.readline()
                 if line: self._log(_log.INFO, line.rstrip())
                 elif self.process.poll() is not None: break
-                else: _time.sleep(0.5)
+                else: _time.sleep(5)
             if self.process.returncode != 0:
                 raise _sp.CalledProcessError(self.process.returncode, cmd)
         finally:

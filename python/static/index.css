@@ -1,14 +1,93 @@
 /* index.css – minimal, readable defaults */
-*{box-sizing:border-box;font-family:system-ui,Arial,Helvetica;}
-body{margin:0;display:flex;flex-direction:column;min-height:100vh;background:#fafafa;color:#222;}
-header{background:#111;color:#fff;padding:0.5rem 1rem;display:flex;align-items:center;gap:1rem}
-header h1{margin:0;font-size:1.4rem;font-weight:600;}
-header h1 span{color:#63e;}
-nav a{color:#fff;text-decoration:none;margin-right:1rem;font-weight:500;opacity:.7}
-nav a:hover{opacity:1}
-.grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;padding:2rem;max-width:1200px;margin:0 auto}
-.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:2rem;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1rem;cursor:pointer;transition:box-shadow .15s}
-.card:hover{box-shadow:0 6px 18px rgba(0,0,0,.08)}
-.card h2{margin:0;font-size:1.25rem}
-.card p{margin:0;text-align:center;font-size:.9rem;color:#555}
-footer{background:#f0f0f0;padding:0.75rem 1rem;text-align:center;font-size:.85rem;border-top:1px solid #e2e2e2}
+* {
+    box-sizing: border-box;
+    font-family: system-ui, Arial, Helvetica;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #fafafa;
+    color: #222;
+}
+
+header {
+    background: #111;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+header h1 span {
+    color: #63e;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 1rem;
+    font-weight: 500;
+    opacity: .7
+}
+
+nav a:hover {
+    opacity: 1
+}
+
+.grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: box-shadow .15s
+}
+
+.card:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .08)
+}
+
+.card h2 {
+    margin: 0;
+    font-size: 1.25rem
+}
+
+.card p {
+    margin: 0;
+    text-align: center;
+    font-size: .9rem;
+    color: #555
+}
+
+footer {
+    background: #f0f0f0;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: .85rem;
+    border-top: 1px solid #e2e2e2
+}
