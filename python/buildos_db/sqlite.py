@@ -1,5 +1,8 @@
 # -----------------------------------------------------------------------------
-# buildos_db/sqlite.py
+# LIBRARY: buildos_db
+# FILE: buildos_db/sqlite.py
+# AUTHOR: aurelien.izoulet
+# LICENSE: Apache License 2.0
 # -----------------------------------------------------------------------------
 import base64
 import datetime
@@ -47,6 +50,7 @@ CREATE TABLE content_chunks (
 );
 """
 
+
 class SQLiteDB(DBInterface):
     """Concrete implementation using a single‑file WAL‑enabled SQLite DB."""
 
@@ -93,7 +97,9 @@ class SQLiteDB(DBInterface):
             now = datetime.datetime.utcnow().isoformat()
 
             # seed repositories from env
-            for uri in [u.strip() for u in os.getenv("SERVE", "").split(",") if u.strip()]:
+            for uri in [
+                u.strip() for u in os.getenv("SERVE", "").split(",") if u.strip()
+            ]:
                 repo_id = str(uuid.uuid4())
                 display_name = uri
                 cur.execute(
@@ -109,8 +115,9 @@ class SQLiteDB(DBInterface):
     # ------------------------------------------------------------------
     # repositories
     # ------------------------------------------------------------------
-    def add_repository(self, repo_id: str, git_uri: str, name: str,
-                       created_at: str) -> None:
+    def add_repository(
+        self, repo_id: str, git_uri: str, name: str, created_at: str
+    ) -> None:
         with self._lock:
             conn = self._get_conn()
             conn.execute(
@@ -118,7 +125,8 @@ class SQLiteDB(DBInterface):
                 "VALUES (?, ?, ?, ?)",
                 (repo_id, git_uri, name, created_at),
             )
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
     def get_repositories(self) -> List[Dict]:
         conn = self._get_conn()
@@ -150,11 +158,16 @@ class SQLiteDB(DBInterface):
                 "VALUES (?, ?, 'queued', ?)",
                 (task_id, repo_id, created_at),
             )
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
-    def update_task_status(self, task_id: str, status: str,
-                           started_at: Optional[str] = None,
-                           finished_at: Optional[str] = None):
+    def update_task_status(
+        self,
+        task_id: str,
+        status: str,
+        started_at: Optional[str] = None,
+        finished_at: Optional[str] = None,
+    ):
         with self._lock:
             conn = self._get_conn()
             sql = "UPDATE tasks SET status = ?"
@@ -168,7 +181,8 @@ class SQLiteDB(DBInterface):
             sql += " WHERE id = ?"
             params.append(task_id)
             conn.execute(sql, tuple(params))
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
     def get_tasks_for_repo(self, repo_id: str) -> List[Dict]:
         conn = self._get_conn()
@@ -202,13 +216,14 @@ class SQLiteDB(DBInterface):
             cur = conn.cursor()
             cur.execute("DELETE FROM content_chunks WHERE task_id = ?", (task_id,))
             for seq, offset in enumerate(range(0, len(blob_bytes), chunk_size)):
-                slice_ = blob_bytes[offset:offset + chunk_size]
+                slice_ = blob_bytes[offset : offset + chunk_size]
                 b64 = base64.b64encode(slice_).decode("ascii")
                 cur.execute(
                     "INSERT INTO content_chunks (task_id, seq, data) VALUES (?, ?, ?)",
                     (task_id, seq, b64),
                 )
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
     def stream_task_content(self, task_id: str) -> Iterator[bytes]:
         conn = self._get_conn()
@@ -231,7 +246,8 @@ class SQLiteDB(DBInterface):
                 "INSERT INTO logs (task_id, timestamp, line) VALUES (?, ?, ?)",
                 (task_id, timestamp, line),
             )
-            conn.commit(); conn.close()
+            conn.commit()
+            conn.close()
 
     def get_logs(self, task_id: str) -> List[Dict]:
         conn = self._get_conn()

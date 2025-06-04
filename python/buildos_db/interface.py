@@ -1,5 +1,13 @@
+# -----------------------------------------------------------------------------
+# LIBRARY: buildos_db
+# FILE: buildos_db/interface.py
+# AUTHOR: aurelien.izoulet
+# LICENSE: Apache License 2.0
+# -----------------------------------------------------------------------------
+
 import abc
 from typing import List, Dict, Optional, Iterator
+
 
 class DBInterface(abc.ABC):
     """Abstract persistence interface for BuildOS.
@@ -19,8 +27,9 @@ class DBInterface(abc.ABC):
     # repositories
     # ---------------------------------------------------------------------
     @abc.abstractmethod
-    def add_repository(self, repo_id: str, git_uri: str, name: str,
-                       created_at: str) -> None: ...
+    def add_repository(
+        self, repo_id: str, git_uri: str, name: str, created_at: str
+    ) -> None: ...
 
     @abc.abstractmethod
     def get_repositories(self) -> List[Dict]: ...
@@ -35,9 +44,13 @@ class DBInterface(abc.ABC):
     def create_task(self, task_id: str, repo_id: str, created_at: str) -> None: ...
 
     @abc.abstractmethod
-    def update_task_status(self, task_id: str, status: str,
-                           started_at: Optional[str] = None,
-                           finished_at: Optional[str] = None) -> None: ...
+    def update_task_status(
+        self,
+        task_id: str,
+        status: str,
+        started_at: Optional[str] = None,
+        finished_at: Optional[str] = None,
+    ) -> None: ...
 
     @abc.abstractmethod
     def get_tasks_for_repo(self, repo_id: str) -> List[Dict]: ...
@@ -65,4 +78,3 @@ class DBInterface(abc.ABC):
 
     @abc.abstractmethod
     def get_logs_since(self, task_id: str, after_id: int) -> List[Dict]: ...
-

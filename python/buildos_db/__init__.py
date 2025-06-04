@@ -1,6 +1,6 @@
 """Top-level helper that exposes a singleton DB instance.
-     Usage:
-         from buildos_db import db
+Usage:
+    from buildos_db import db
 """
 
 from pathlib import Path

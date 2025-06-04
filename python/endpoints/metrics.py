@@ -6,6 +6,13 @@ from flask import Blueprint, jsonify
 
 metrics_bp = Blueprint("metrics", __name__)
 
+# —————————————————————————————————————————————————————————————
+# Endpoint: System Metrics
+# GET /metrics/cpu
+# GET /metrics/memory
+# GET /metrics/disk
+# —————————————————————————————————————————————————————————————
+
 
 @metrics_bp.route("/metrics/cpu")
 def metrics_cpu():
@@ -22,4 +29,6 @@ def metrics_memory():
 def metrics_disk():
     du = shutil.disk_usage("/")
     percent = round(du.used / du.total * 100, 1)
-    return jsonify({"total": du.total, "used": du.used, "free": du.free, "percent": percent})
+    return jsonify(
+        {"total": du.total, "used": du.used, "free": du.free, "percent": percent}
+    )

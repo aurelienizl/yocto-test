@@ -75,7 +75,9 @@ def download_content(job_id: str):
         return jsonify({"error": "No content available"}), 404
 
     headers = {"Content-Disposition": f'attachment; filename="{job_id}.zip"'}
-    return Response(db.stream_task_content(job_id), mimetype="application/zip", headers=headers)
+    return Response(
+        db.stream_task_content(job_id), mimetype="application/zip", headers=headers
+    )
 
 
 @pipeline_bp.route("/current")
@@ -83,9 +85,11 @@ def current_job():
     cj = job_queue.current_job
     if not cj:
         return jsonify({"message": "No job is currently running."})
-    return jsonify({
-        "id": cj.id,
-        "repo_id": cj.repo_id,
-        "git_uri": cj.git_uri,
-        "status": cj.status,
-    })
+    return jsonify(
+        {
+            "id": cj.id,
+            "repo_id": cj.repo_id,
+            "git_uri": cj.git_uri,
+            "status": cj.status,
+        }
+    )

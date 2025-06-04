@@ -1,5 +1,3 @@
-# mirror_bp.py
-
 import os
 import shutil
 from flask import Blueprint, request, send_from_directory, jsonify, current_app
@@ -9,22 +7,25 @@ mirror_bp = Blueprint("mirror", __name__, url_prefix="/mirror")
 
 src_dir = "/home/generic/yocto-mirror"
 
+
 # —————————————————————————————————————————————————————————————
 # Helpers: uniform success/error JSON responses
 # —————————————————————————————————————————————————————————————
 def success(data=None, message="Success"):
     return jsonify({"status": "success", "message": message, "data": data})
 
+
 def error(message="Error", code=400):
     resp = jsonify({"status": "error", "message": message, "data": None})
     resp.status_code = code
     return resp
 
+
 def resolve(path: str) -> str:
     """
     Safely resolve `path` under base_dir. Prevents directory traversal.
     """
-    base_dir = src_dir 
+    base_dir = src_dir
     if not base_dir:
         raise RuntimeError("src_dir not configured")
     # Compute absolute paths
@@ -32,6 +33,7 @@ def resolve(path: str) -> str:
     if not full.startswith(os.path.abspath(base_dir)):
         raise PermissionError("Invalid path")
     return full
+
 
 # —————————————————————————————————————————————————————————————
 # Endpoint: List directory contents
@@ -46,12 +48,14 @@ def list_files():
         for name in os.listdir(full):
             p = os.path.join(full, name)
             st = os.stat(p)
-            items.append({
-                "name": name,
-                "is_dir": os.path.isdir(p),
-                "size": st.st_size,
-                "last_modified": int(st.st_mtime)
-            })
+            items.append(
+                {
+                    "name": name,
+                    "is_dir": os.path.isdir(p),
+                    "size": st.st_size,
+                    "last_modified": int(st.st_mtime),
+                }
+            )
         return success(items)
     except PermissionError as e:
         return error(str(e), 403)
@@ -60,6 +64,7 @@ def list_files():
     except Exception as e:
         current_app.logger.exception(e)
         return error(str(e), 500)
+
 
 # —————————————————————————————————————————————————————————————
 # Endpoint: Download a file
@@ -81,6 +86,7 @@ def download():
     except Exception as e:
         current_app.logger.exception(e)
         return error(str(e), 500)
+
 
 # —————————————————————————————————————————————————————————————
 # Endpoint: Delete a file or empty folder
@@ -111,6 +117,7 @@ def delete():
         current_app.logger.exception(e)
         return error(str(e), 500)
 
+
 # —————————————————————————————————————————————————————————————
 # Endpoint: Upload a file
 # POST /mirror/upload   form-data: "path" + file field "file"
@@ -131,6 +138,7 @@ def upload():
     except Exception as e:
         current_app.logger.exception(e)
         return error(str(e), 500)
+
 
 # —————————————————————————————————————————————————————————————
 # Endpoint: Create a new folder
@@ -155,6 +163,7 @@ def create_folder():
     except Exception as e:
         current_app.logger.exception(e)
         return error(str(e), 500)
+
 
 # —————————————————————————————————————————————————————————————
 # Endpoint: Rename a file or folder
@@ -182,6 +191,7 @@ def rename():
         current_app.logger.exception(e)
         return error(str(e), 500)
 
+
 # —————————————————————————————————————————————————————————————
 # Endpoint: Move a file or folder into another directory
 # POST /mirror/move   JSON or form: { "path": <src-dir>, "name": <entry>, "target": <dst-dir> }
@@ -189,8 +199,8 @@ def rename():
 @mirror_bp.route("/move", methods=["POST"])
 def move():
     data = request.get_json(silent=True) or request.form
-    path   = data.get("path", "")
-    name   = data.get("name", "").strip()
+    path = data.get("path", "")
+    name = data.get("name", "").strip()
     target = data.get("target", "").strip()
     if not name or not target:
         return error("Missing name or target", 400)
@@ -210,15 +220,16 @@ def move():
         current_app.logger.exception(e)
         return error(str(e), 500)
 
+
 # —————————————————————————————————————————————————————————————
 # Endpoint: Copy a file or entire folder tree
 # POST /mirror/copy   JSON or form: { "path": <src-dir>, "name": <entry>, "target": <dst-dir> }
 # —————————————————————————————————————————————————————————————
 @mirror_bp.route("/copy", methods=["POST"])
 def copy_item():
-    data   = request.get_json(silent=True) or request.form
-    path   = data.get("path", "")
-    name   = data.get("name", "").strip()
+    data = request.get_json(silent=True) or request.form
+    path = data.get("path", "")
+    name = data.get("name", "").strip()
     target = data.get("target", "").strip()
     if not name or not target:
         return error("Missing name or target", 400)
