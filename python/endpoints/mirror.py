@@ -128,9 +128,13 @@ def upload():
     file = request.files.get("file")
     if not file:
         return error("No file provided", 400)
+    if not file.filename:
+        return error("No filename provided", 400)
     try:
         folder = resolve(path)
-        filename = secure_filename(file.filename)
+        filename = secure_filename(file.filename or "")
+        if not filename:
+            return error("Invalid filename", 400)
         file.save(os.path.join(folder, filename))
         return success({"filename": filename}, f'"{filename}" uploaded')
     except PermissionError as e:
