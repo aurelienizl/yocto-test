@@ -18,7 +18,7 @@ from .job import Job
 
 class JobQueue:
     def __init__(self):
-        self._queue: List[Job] = []
+        self._queue: List[Optional[Job]] = []
         self._jobs: Dict[str, Job] = {}
         self.current_job: Optional[Job] = None
 
@@ -46,7 +46,7 @@ class JobQueue:
             job.status = Job.STATUS_CANCELED
             ts = _dt.datetime.utcnow().isoformat()
             db.update_task_status(job.id, job.status, finished_at=ts)
-            self._queue = [j for j in self._queue if j.id != job_id]
+            self._queue = [j for j in self._queue if j is not None and j.id != job_id]
             return True, f"Job {job_id} cancelled"
 
     def kill_current_job(self):
@@ -59,9 +59,10 @@ class JobQueue:
     def shutdown(self):
         with self._lock:
             for j in self._queue:
-                j.status = Job.STATUS_CANCELED
-                ts = _dt.datetime.utcnow().isoformat()
-                db.update_task_status(j.id, j.status, finished_at=ts)
+                if j is not None:
+                    j.status = Job.STATUS_CANCELED
+                    ts = _dt.datetime.utcnow().isoformat()
+                    db.update_task_status(j.id, j.status, finished_at=ts)
             self._queue.clear()
             self._queue.append(None)
 
