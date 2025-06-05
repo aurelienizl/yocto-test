@@ -97,9 +97,14 @@ class Job:
                     self._log(_log.ERROR, "Timeout exceeded")
                     self._terminate_pg()
                     raise _sp.TimeoutExpired(cmd, self.timeout)
-                line = self.process.stdout.readline()
-                if line:
-                    self._log(_log.INFO, line.rstrip())
+                if self.process.stdout is not None:
+                    line = self.process.stdout.readline()
+                    if line:
+                        self._log(_log.INFO, line.rstrip())
+                    elif self.process.poll() is not None:
+                        break
+                    else:
+                        _time.sleep(5)
                 elif self.process.poll() is not None:
                     break
                 else:
